@@ -15,7 +15,6 @@ pub struct ThreadPool {
     sender: mpsc::Sender<Message>,
 }
 
-
 impl ThreadPool {
     /// Create a new ThreadPool.
     ///
@@ -67,7 +66,6 @@ impl Drop for ThreadPool {
             if let Some(thread) = worker.thread.take() {
                 thread.join().unwrap();
             }
-
         }
     }
 }
@@ -92,8 +90,6 @@ impl Worker {
                     break;
                 }
             }
-
-
         });
 
         Worker {

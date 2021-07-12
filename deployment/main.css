@@ -1,0 +1,57 @@
+body, html {
+    height: 100%;
+}
+
+#main {
+    width: 600px;
+    position: relative;
+    margin: 0 auto;
+    min-height: 500px;
+}
+
+h1 {
+    color: green;
+}
+
+h2 {
+    color: green;
+    font-size: 20px;
+}
+
+h1 a {
+    color: green;
+    text-decoration: none;
+}
+
+#claim {
+    font-style: italic;
+    margin-bottom: 70px;
+}
+
+#footer {
+    padding-top: 100px;
+    width: 600px;
+    margin: auto;
+}
+
+#info {
+    margin-top: 100px;
+}
+
+#info-table {
+    width: 350px;
+}
+
+#content-table {
+    list-style-type: none;
+    padding: 0;
+}
+
+.content-table-main {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.content-table-sub {
+    margin-left: 20px;
+}

@@ -5,8 +5,8 @@ stages:
     run: |
       #docker login cloud.canister.io:5000 --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
       export DEBIAN_FRONTEND=noninteractive
-      #apt-get install curl -y
       apt-get update
+      apt-get install curl -y
       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
       cargo build --release
     env:

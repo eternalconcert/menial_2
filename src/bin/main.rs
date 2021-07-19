@@ -1,8 +1,7 @@
 extern crate clap;
 extern crate yaml_rust;
 
-use ::menial_2::log;
-use ::menial_2::LOG_LEVEL;
+use ::menial_2::{log, LOG_LEVEL};
 use ::menial_2::ThreadPool;
 use clap::{App, Arg};
 use std::fs;

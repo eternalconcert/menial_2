@@ -2,8 +2,8 @@ FROM debian:bullseye-slim
 
 WORKDIR /app/
 
-ADD target/release/main .
-ADD default default/
+COPY target/release/main .
+COPY default default/
 
 RUN chmod +x main
 

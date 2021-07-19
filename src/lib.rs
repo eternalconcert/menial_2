@@ -21,17 +21,42 @@ macro_rules! log {
         let now: DateTime<Utc> = Utc::now();
         let formatted = String::from(format!("[{}] {} [{}:{}]: {}", $level, now.format("%Y-%m-%d %H:%M:%S"), file!(), line!(), $text));
 
-        if *LOG_LEVEL == "INFO" {
-            println!("TEST")
+        if *LOG_LEVEL == "DEBUG" {
+            let val = formatted.to_owned();
+            match $level {
+                "debug" => println!("{}", Colour::Green.paint(val)),
+                "info" => println!("{}", val),
+                "warning" => println!("{}", Colour::Yellow.paint(val)),
+                "error" => println!("{}", Colour::Red.paint(val)),
+                _ => {},
+            }
         };
 
-        match $level {
-            "debug" => println!("{}", Colour::Green.paint(formatted)),
-            "info" => println!("{}", formatted),
-            "warning" => println!("{}", Colour::Yellow.paint(formatted)),
-            "error" => println!("{}", Colour::Red.paint(formatted)),
-            _ => println!("{}", formatted),
-        }
+        if *LOG_LEVEL == "INFO" {
+            let val = formatted.to_owned();
+            match $level {
+                "info" => println!("{}", val),
+                "warning" => println!("{}", Colour::Yellow.paint(val)),
+                "error" => println!("{}", Colour::Red.paint(val)),
+                _ => {},
+            }
+        };
+
+        if *LOG_LEVEL == "WARNING" {
+            let val = formatted.to_owned();
+            match $level {
+                "warning" => println!("{}", Colour::Yellow.paint(val)),
+                "error" => println!("{}", Colour::Red.paint(val)),                _ => {},
+            }
+        };
+
+        if *LOG_LEVEL == "ERROR" {
+            let val = formatted.to_owned();
+            match $level {
+                "error" => println!("{}", Colour::Red.paint(val)),
+                _ => {},
+            }
+        };
     }
 }
 

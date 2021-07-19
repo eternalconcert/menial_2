@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM debian:bullseye-slim
 
 WORKDIR /app/
 
@@ -7,4 +7,4 @@ ADD default default/
 
 RUN chmod +x main
 
-CMD ["/main"]
+CMD ["/app/main", "-p", "80", "-h", "0.0.0.0"]

@@ -7,8 +7,9 @@ stages:
       export DEBIAN_FRONTEND=noninteractive
       apt-get update
       apt-get install wget -y
-      wget https://sh.rustup.rs
-      sh index.html -y
+      wget https://sh.rustup.rs -O rustup.sh
+      sh rustup.sh -y
+      source $HOME/.cargo/env
       cargo build --release
     env:
       DOCKER_USERNAME: ${DOCKER_USERNAME}

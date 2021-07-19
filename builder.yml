@@ -8,7 +8,7 @@ stages:
       apt-get update
       apt-get install wget -y
       wget https://sh.rustup.rs
-      sh index.html
+      sh index.html -y
       cargo build --release
     env:
       DOCKER_USERNAME: ${DOCKER_USERNAME}

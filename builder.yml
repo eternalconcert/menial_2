@@ -3,12 +3,12 @@ image: cloud.canister.io:5000/eternalconcert/builder-default
 stages:
   - name: build
     run: |
-      #docker login registry.gitlab.com --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+      #docker login cloud.canister.io:5000 --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
       export DEBIAN_FRONTEND=noninteractive
       #apt-get install curl -y
       apt-get update
       apt-get install -y --no-install-recommends rustc cargo
-      cargo build --realease
+      cargo build --release
     env:
       DOCKER_USERNAME: ${DOCKER_USERNAME}
       DOCKER_PASSWORD: ${DOCKER_PASSWORD}

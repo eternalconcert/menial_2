@@ -1,5 +1,8 @@
 extern crate clap;
+extern crate yaml_rust;
 
+use ::menial_2::log;
+use ::menial_2::LOG_LEVEL;
 use ::menial_2::ThreadPool;
 use clap::{App, Arg};
 use std::fs;
@@ -9,24 +12,11 @@ use std::net::TcpStream;
 use std::path::Path;
 use chrono::{DateTime, Utc};
 use ansi_term::Colour;
+use yaml_rust::{YamlLoader};
 
-macro_rules! log {
-    ($level: expr, $text: expr) => {
-        assert!($level == "debug" || $level == "info" || $level == "warning" || $level == "error");
-        let now: DateTime<Utc> = Utc::now();
-        let formatted = String::from(format!("{} [{}:{}]: {}", now.format("%Y-%m-%d %H:%M:%S"), file!(), line!(), $text));
-
-        match $level {
-            "debug" => println!("{}", Colour::Green.paint(formatted)),
-            "info" => println!("{}", formatted),
-            "warning" => println!("{}", Colour::Yellow.paint(formatted)),
-            "error" => println!("{}", Colour::Red.paint(formatted)),
-            _ => println!("{}", formatted),
-        }
-    }
-}
 
 fn main() {
+
     let matches = App::new("Menial 2")
         .arg(
             Arg::with_name("host")
@@ -52,16 +42,55 @@ fn main() {
                 .help("The document root")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("resources")
+                .short("s")
+                .long("resources")
+                .value_name("resources")
+                .help("The resources directory")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("file")
+                .short("f")
+                .long("file")
+                .value_name("file")
+                .help("The document conf")
+                .takes_value(true),
+        )
         .get_matches();
 
-    let host = matches.value_of("host").unwrap_or("127.0.0.1");
+
+    let host: String;
+    let port: String;
+    let root: String;
+    let resources: String;
+
+    let config_path = matches.value_of("file").unwrap_or("");
+    if config_path != "" {
+        log!("info", format!("Config file: {}", config_path));
+
+        let yaml_content = fs::read_to_string(config_path).unwrap();
+
+        let docs = YamlLoader::load_from_str(&yaml_content).unwrap();
+        let doc = &docs[0];
+
+        host = doc["host"].as_str().unwrap_or("127.0.0.1").to_owned();
+        port = doc["port"].as_str().unwrap_or("8080").to_owned();
+        root = String::from(doc["root"].as_str().unwrap_or("."));
+        resources = String::from(doc["resources"].as_str().unwrap_or("."));
+
+    } else {
+        host = matches.value_of("host").unwrap_or("127.0.0.1").to_owned();
+        port = matches.value_of("port").unwrap_or("8080").to_owned();
+        root = String::from(matches.value_of("root").unwrap_or("default")).to_owned();
+        resources = String::from(matches.value_of("resources").unwrap_or("default/pages")).to_owned();
+    }
+
     log!("info", format!("Host: {}", host));
-
-    let port = matches.value_of("port").unwrap_or("8080");
     log!("info", format!("Port: {}", port));
-
-    let root = String::from(matches.value_of("root").unwrap_or("."));
     log!("info", format!("Document root: {}", root));
+    log!("info", format!("Resources root: {}", resources));
 
     let listener = TcpListener::bind(format!("{}:{}", host, port)).unwrap();
 
@@ -69,50 +98,58 @@ fn main() {
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-        let r = root.to_owned();
+        let dr = root.to_owned();
+        let rr = resources.to_owned();
         pool.execute(move || {
-            handle_connection(stream, &r);
+            handle_connection(stream, &dr, &rr);
         });
     }
 }
 
 const SERVER_LINE: &str = "Server: menial 2";
 
-fn handle_connection(mut stream: TcpStream, root: &str) {
+fn handle_connection(mut stream: TcpStream, document_root: &str, resources_root: &str) {
     let mut buffer = [0; 1024];
     stream.read(&mut buffer).unwrap();
 
     let content = String::from_utf8_lossy(&buffer);
 
-    let get = b"GET / HTTP/1.1\r\n";
+    let mut document = String::from("");
 
     match content.find("HTTP") {
-        Some(v) => println!("---- {}", v),
+        Some(v) => document = String::from(&content[4..v-1]),
         None => {}
     }
 
-    let doc = String::from(format!("{}/index.html", root));
+    if document == "/" {
+        document = String::from("index.html");
+    }
 
-    let (status_line, filename) = if Path::new(&doc).exists() && buffer.starts_with(get) {
-        ("HTTP/1.1 200 OK", doc)
+    log!("debug", format!("Requested document: {}", document));
+
+    let doc = String::from(format!("{}/{}", document_root, document));
+
+    let status_line: String;
+    let filename: String;
+    if Path::new(&doc).exists() && buffer.starts_with(b"GET") {
+        status_line = String::from("HTTP/1.1 200 OK");
+        filename = doc;
     } else {
-        // let doc = String::from(format!("{}/404.html", root));
-        (
-            "HTTP/1.1 404 NOT FOUND",
-            String::from("deployment/404.html"),
-        )
+        status_line = String::from("HTTP/1.1 404 NOT FOUND");
+        filename = String::from(format!("{}/404.html", resources_root));
     };
 
-    let contents = fs::read_to_string(filename).unwrap();
+    let contents = fs::read(filename).unwrap();
 
     let response = format!(
-        "{}\n{}\nContent-Length: {}\r\n\r\n{}",
+        "{}\n{}\nContent-Length: {}\r\n\r\n",
         status_line,
         SERVER_LINE,
         contents.len(),
-        contents
     );
 
     stream.write(response.as_bytes()).unwrap();
+    stream.write_all(&contents).unwrap();
+
     stream.flush().unwrap();
 }

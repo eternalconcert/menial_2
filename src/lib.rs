@@ -2,6 +2,38 @@ use std::sync::mpsc;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::thread;
+use chrono::{DateTime, Utc};
+pub use ansi_term::Colour;
+use std::env;
+use lazy_static::lazy_static;
+
+
+lazy_static! {
+    pub static ref LOG_LEVEL: String = env::var("LOGLEVEL").unwrap_or(String::from("INFO"));
+}
+
+
+#[macro_export]
+macro_rules! log {
+    ($level: expr, $text: expr) => {
+
+        assert!($level == "debug" || $level == "info" || $level == "warning" || $level == "error");
+        let now: DateTime<Utc> = Utc::now();
+        let formatted = String::from(format!("[{}] {} [{}:{}]: {}", $level, now.format("%Y-%m-%d %H:%M:%S"), file!(), line!(), $text));
+
+        if *LOG_LEVEL == "INFO" {
+            println!("TEST")
+        };
+
+        match $level {
+            "debug" => println!("{}", Colour::Green.paint(formatted)),
+            "info" => println!("{}", formatted),
+            "warning" => println!("{}", Colour::Yellow.paint(formatted)),
+            "error" => println!("{}", Colour::Red.paint(formatted)),
+            _ => println!("{}", formatted),
+        }
+    }
+}
 
 type Job = Box<dyn FnOnce() + Send + 'static>;
 
@@ -52,16 +84,16 @@ impl ThreadPool {
 
 impl Drop for ThreadPool {
     fn drop(&mut self) {
-        println!("Sending terminate message to all workers.");
+        log!("debug", "Sending terminate message to all workers.");
 
         for _ in &self.workers {
             self.sender.send(Message::Terminate).unwrap();
         }
 
-        println!("Shutting down all workers.");
+        log!("debug", "Shutting down all workers.");
 
         for worker in &mut self.workers {
-            println!("Shutting down worker: {}", worker.id);
+            log!("debug", format!("Shutting down worker: {}", worker.id));
 
             if let Some(thread) = worker.thread.take() {
                 thread.join().unwrap();
@@ -82,11 +114,11 @@ impl Worker {
 
             match message {
                 Message::NewJob(job) => {
-                    println!("Worker got a new job, id: {}", id);
+                    log!("debug", format!("Worker got a new job, id: {}", id));
                     job();
                 }
                 Message::Terminate => {
-                    println!("Worker was told to terminate, id: {}", id);
+                    log!("debug", format!("Worker was told to terminate, id: {}", id));
                     break;
                 }
             }

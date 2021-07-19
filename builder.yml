@@ -7,7 +7,7 @@ stages:
       export DEBIAN_FRONTEND=noninteractive
       #apt-get install curl -y
       apt-get update
-      apt-get install -y --no-install-recommends rustc
+      apt-get install -y --no-install-recommends rustc cargo
       cargo build --realease
     env:
       DOCKER_USERNAME: ${DOCKER_USERNAME}

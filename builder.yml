@@ -6,7 +6,7 @@ stages:
       #docker login cloud.canister.io:5000 --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
       export DEBIAN_FRONTEND=noninteractive
       apt-get update
-      apt-get install curl -y
+      apt-get install wget -y
       wget https://sh.rustup.rs
       sh rustup.rs
       cargo build --release

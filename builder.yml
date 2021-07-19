@@ -11,6 +11,7 @@ stages:
       sh rustup.sh -y
       source $HOME/.cargo/env
       cargo build --release
+      cp target/release/main /out/
     env:
       DOCKER_USERNAME: ${DOCKER_USERNAME}
       DOCKER_PASSWORD: ${DOCKER_PASSWORD}

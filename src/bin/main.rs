@@ -111,19 +111,21 @@ fn handle_connection(mut stream: TcpStream, document_root: &str, resources_root:
     let mut buffer = [0; 1024];
     stream.read(&mut buffer).unwrap();
 
-    let content = String::from_utf8_lossy(&buffer);
+    let request_content = String::from_utf8_lossy(&buffer);
 
     let mut document = String::from("");
 
-    match content.find("HTTP") {
-        Some(v) => document = String::from(&content[4..v-1]),
+    match request_content.find("HTTP") {
+        Some(v) => document = String::from(&request_content[4..v-1]),
         None => {}
     }
 
-    match content.find("..") {
+    let mut status: u16 = 0;
+
+    match request_content.find("..") {
         Some(_) => {
-            log!("warning", format!("Intrustion try detected: {}", content));
-            document = String::from("/");
+            log!("warning", format!("Intrustion try detected: {}", request_content));
+            status = 400;
         },
         None => {}
     }
@@ -137,16 +139,31 @@ fn handle_connection(mut stream: TcpStream, document_root: &str, resources_root:
     let doc = String::from(format!("{}{}", document_root, document));
     log!("debug", format!("Requested document path: {}", doc));
 
-    let status_line: String;
-    let filename: String;
-    if Path::new(&doc).exists() && buffer.starts_with(b"GET") {
-        status_line = String::from("HTTP/1.1 200 OK");
-        filename = doc;
-    } else {
+    let mut status_line: String = String::from("");
+    let mut filename: String = String::from("");
+    if Path::new(&doc).exists() && request_content.starts_with("GET") {
+        status = 200;
+    } else if status == 0 {
         log!("warning", format!("Requested document not found: {}", doc));
-        status_line = String::from("HTTP/1.1 404 NOT FOUND");
-        filename = String::from(format!("{}/404.html", resources_root));
+        status = 404;
     };
+
+    match status {
+        200 => {
+            status_line = String::from("HTTP/1.1 200 OK");
+            filename = doc;
+        },
+        400 => {
+            status_line = String::from("HTTP/1.1 400 BAD REQUEST");
+            filename = String::from(format!("{}/400.html", resources_root));
+        },
+        404 => {
+            status_line = String::from("HTTP/1.1 404 NOT FOUND");
+            filename = String::from(format!("{}/404.html", resources_root));
+        },
+        _ => {}
+
+    }
 
     let contents = fs::read(filename).unwrap();
 

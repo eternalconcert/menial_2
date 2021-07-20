@@ -120,6 +120,14 @@ fn handle_connection(mut stream: TcpStream, document_root: &str, resources_root:
         None => {}
     }
 
+    match content.find("..") {
+        Some(_) => {
+            log!("warning", format!("Intrustion try detected: {}", content));
+            document = String::from("/");
+        },
+        None => {}
+    }
+
     if document == "/" {
         document = String::from("/index.html");
     }

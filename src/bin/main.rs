@@ -121,12 +121,13 @@ fn handle_connection(mut stream: TcpStream, document_root: &str, resources_root:
     }
 
     if document == "/" {
-        document = String::from("index.html");
+        document = String::from("/index.html");
     }
 
-    log!("debug", format!("Requested document: {}", document));
+    log!("debug", format!("GET-Request: {}", document));
 
-    let doc = String::from(format!("{}/{}", document_root, document));
+    let doc = String::from(format!("{}{}", document_root, document));
+    log!("debug", format!("Requested document path: {}", doc));
 
     let status_line: String;
     let filename: String;
@@ -134,6 +135,7 @@ fn handle_connection(mut stream: TcpStream, document_root: &str, resources_root:
         status_line = String::from("HTTP/1.1 200 OK");
         filename = doc;
     } else {
+        log!("warning", format!("Requested document not found: {}", doc));
         status_line = String::from("HTTP/1.1 404 NOT FOUND");
         filename = String::from(format!("{}/404.html", resources_root));
     };

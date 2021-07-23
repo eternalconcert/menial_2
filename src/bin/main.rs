@@ -1,8 +1,8 @@
 extern crate clap;
 extern crate yaml_rust;
 
-use ::menial_2::{log, LOG_LEVEL};
-use ::menial_2::ThreadPool;
+
+use menial_2::{log, LOG_LEVEL, ThreadPool};
 use clap::{App, Arg};
 use std::fs;
 use std::io::prelude::*;
@@ -14,7 +14,15 @@ use ansi_term::Colour;
 use yaml_rust::{YamlLoader};
 
 
-fn main() {
+struct Config {
+    host: String,
+    port: String,
+    root: String,
+    resources: String,
+}
+
+
+fn get_config() -> Config {
 
     let matches = App::new("Menial 2")
         .arg(
@@ -65,7 +73,8 @@ fn main() {
     let root: String;
     let resources: String;
 
-    let config_path = matches.value_of("file").unwrap_or("");
+    let config_path = String::from(matches.value_of("file").unwrap_or(""));
+
     if config_path != "" {
         log!("info", format!("Config file: {}", config_path));
 
@@ -91,16 +100,29 @@ fn main() {
     log!("info", format!("Document root: {}", root));
     log!("info", format!("Resources root: {}", resources));
 
-    let listener = TcpListener::bind(format!("{}:{}", host, port)).unwrap();
+    return Config {
+        host,
+        port,
+        root,
+        resources
+    };
+}
+
+
+fn main() {
+
+    let config = get_config();
+
+    let listener = TcpListener::bind(format!("{}:{}", config.host, config.port)).unwrap();
 
     let pool = ThreadPool::new(4);
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-        let dr = root.to_owned();
-        let rr = resources.to_owned();
+        let root = config.root.to_owned();
+        let resources = config.resources.to_owned();
         pool.execute(move || {
-            handle_connection(stream, &dr, &rr);
+            handle_connection(stream, &root, &resources);
         });
     }
 }
@@ -124,7 +146,7 @@ fn handle_connection(mut stream: TcpStream, document_root: &str, resources_root:
 
     match request_content.find("..") {
         Some(_) => {
-            log!("warning", format!("Intrustion try detected: {}", request_content));
+            log!("warning", format!("Intrusion try detected: {}", request_content));
             status = 400;
         },
         None => {}

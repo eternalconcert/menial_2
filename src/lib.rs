@@ -127,10 +127,12 @@ impl Drop for ThreadPool {
     }
 }
 
+
 struct Worker {
     id: usize,
     thread: Option<thread::JoinHandle<()>>,
 }
+
 
 impl Worker {
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Message>>>) -> Worker {

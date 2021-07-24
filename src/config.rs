@@ -1,10 +1,9 @@
-use clap::{App, Arg};
-use yaml_rust::{YamlLoader};
-use std::fs;
+use crate::LOG_LEVEL;
 use ansi_term::Colour;
 use chrono::{DateTime, Utc};
-use crate::{LOG_LEVEL};
-
+use clap::{App, Arg};
+use std::fs;
+use yaml_rust::YamlLoader;
 
 pub struct Config {
     pub host: String,
@@ -13,9 +12,7 @@ pub struct Config {
     pub resources: String,
 }
 
-
 pub fn get_config() -> Config {
-
     let matches = App::new("Menial 2")
         .arg(
             Arg::with_name("host")
@@ -59,7 +56,6 @@ pub fn get_config() -> Config {
         )
         .get_matches();
 
-
     let host: String;
     let port: String;
     let root: String;
@@ -79,12 +75,12 @@ pub fn get_config() -> Config {
         port = doc["port"].as_str().unwrap_or("8080").to_owned();
         root = String::from(doc["root"].as_str().unwrap_or("."));
         resources = String::from(doc["resources"].as_str().unwrap_or("."));
-
     } else {
         host = matches.value_of("host").unwrap_or("127.0.0.1").to_owned();
         port = matches.value_of("port").unwrap_or("8080").to_owned();
         root = String::from(matches.value_of("root").unwrap_or("default")).to_owned();
-        resources = String::from(matches.value_of("resources").unwrap_or("default/pages")).to_owned();
+        resources =
+            String::from(matches.value_of("resources").unwrap_or("default/pages")).to_owned();
     }
 
     crate::log!("info", format!("Host: {}", host));
@@ -96,6 +92,6 @@ pub fn get_config() -> Config {
         host,
         port,
         root,
-        resources
+        resources,
     };
 }

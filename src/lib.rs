@@ -1,21 +1,18 @@
+pub use ansi_term::Colour;
+use chrono::{DateTime, Utc};
+use lazy_static::lazy_static;
+use std::env;
 use std::sync::mpsc;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::thread;
-use chrono::{DateTime, Utc};
-use lazy_static::lazy_static;
-use std::env;
-pub use ansi_term::Colour;
-
 
 pub mod config;
 pub mod logger;
 
-
 lazy_static! {
     pub static ref LOG_LEVEL: String = env::var("LOGLEVEL").unwrap_or(String::from("INFO"));
 }
-
 
 type Job = Box<dyn FnOnce() + Send + 'static>;
 
@@ -84,12 +81,10 @@ impl Drop for ThreadPool {
     }
 }
 
-
 struct Worker {
     id: usize,
     thread: Option<thread::JoinHandle<()>>,
 }
-
 
 impl Worker {
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Message>>>) -> Worker {

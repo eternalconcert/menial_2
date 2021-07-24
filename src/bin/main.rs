@@ -1,15 +1,15 @@
 extern crate clap;
 extern crate yaml_rust;
 
-use menial_2::{log, LOG_LEVEL, ThreadPool};
-use menial_2::config::{get_config};
+use ansi_term::Colour;
+use chrono::{DateTime, Utc};
+use menial_2::config::get_config;
+use menial_2::{log, ThreadPool, LOG_LEVEL};
 use std::fs;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::path::Path;
-use chrono::{DateTime, Utc};
-use ansi_term::Colour;
 
 fn main() {
     log!("info", "Starting menial/2");
@@ -41,7 +41,7 @@ fn handle_connection(mut stream: TcpStream, document_root: &str, resources_root:
     let mut document = String::from("");
 
     match request_content.find("HTTP") {
-        Some(v) => document = String::from(&request_content[4..v-1]),
+        Some(v) => document = String::from(&request_content[4..v - 1]),
         None => {}
     }
 
@@ -49,9 +49,12 @@ fn handle_connection(mut stream: TcpStream, document_root: &str, resources_root:
 
     match request_content.find("..") {
         Some(_) => {
-            log!("warning", format!("Intrusion try detected: {}", request_content));
+            log!(
+                "warning",
+                format!("Intrusion try detected: {}", request_content)
+            );
             status = 400;
-        },
+        }
         None => {}
     }
 
@@ -77,17 +80,16 @@ fn handle_connection(mut stream: TcpStream, document_root: &str, resources_root:
         200 => {
             status_line = String::from("HTTP/1.1 200 OK");
             filename = doc;
-        },
+        }
         400 => {
             status_line = String::from("HTTP/1.1 400 BAD REQUEST");
             filename = String::from(format!("{}/400.html", resources_root));
-        },
+        }
         404 => {
             status_line = String::from("HTTP/1.1 404 NOT FOUND");
             filename = String::from(format!("{}/404.html", resources_root));
-        },
+        }
         _ => {}
-
     }
 
     let contents = fs::read(filename).unwrap();

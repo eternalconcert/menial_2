@@ -1,10 +1,8 @@
 extern crate clap;
 extern crate yaml_rust;
 
-
 use menial_2::{log, LOG_LEVEL, ThreadPool};
-use menial_2::config::{Config};
-use clap::{App, Arg};
+use menial_2::config::{get_config};
 use std::fs;
 use std::io::prelude::*;
 use std::net::TcpListener;
@@ -12,98 +10,8 @@ use std::net::TcpStream;
 use std::path::Path;
 use chrono::{DateTime, Utc};
 use ansi_term::Colour;
-use yaml_rust::{YamlLoader};
-
-
-fn get_config() -> Config {
-
-    let matches = App::new("Menial 2")
-        .arg(
-            Arg::with_name("host")
-                .short("h")
-                .long("host")
-                .value_name("host")
-                .help("The host to run")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("port")
-                .short("p")
-                .long("port")
-                .value_name("port")
-                .help("The port to run")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("root")
-                .short("r")
-                .long("root")
-                .value_name("root")
-                .help("The document root")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("resources")
-                .short("s")
-                .long("resources")
-                .value_name("resources")
-                .help("The resources directory")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("file")
-                .short("f")
-                .long("file")
-                .value_name("file")
-                .help("The document conf")
-                .takes_value(true),
-        )
-        .get_matches();
-
-
-    let host: String;
-    let port: String;
-    let root: String;
-    let resources: String;
-
-    let config_path = String::from(matches.value_of("file").unwrap_or(""));
-
-    if config_path != "" {
-        log!("info", format!("Config file: {}", config_path));
-
-        let yaml_content = fs::read_to_string(config_path).unwrap();
-
-        let docs = YamlLoader::load_from_str(&yaml_content).unwrap();
-        let doc = &docs[0];
-
-        host = doc["host"].as_str().unwrap_or("127.0.0.1").to_owned();
-        port = doc["port"].as_str().unwrap_or("8080").to_owned();
-        root = String::from(doc["root"].as_str().unwrap_or("."));
-        resources = String::from(doc["resources"].as_str().unwrap_or("."));
-
-    } else {
-        host = matches.value_of("host").unwrap_or("127.0.0.1").to_owned();
-        port = matches.value_of("port").unwrap_or("8080").to_owned();
-        root = String::from(matches.value_of("root").unwrap_or("default")).to_owned();
-        resources = String::from(matches.value_of("resources").unwrap_or("default/pages")).to_owned();
-    }
-
-    log!("info", format!("Host: {}", host));
-    log!("info", format!("Port: {}", port));
-    log!("info", format!("Document root: {}", root));
-    log!("info", format!("Resources root: {}", resources));
-
-    return Config {
-        host,
-        port,
-        root,
-        resources
-    };
-}
-
 
 fn main() {
-
     let config = get_config();
 
     let listener = TcpListener::bind(format!("{}:{}", config.host, config.port)).unwrap();

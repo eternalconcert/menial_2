@@ -3,7 +3,6 @@ image: cloud.canister.io:5000/eternalconcert/builder-default
 stages:
   - name: build
     run: |
-      echo $RUN_NUMBER
       docker login cloud.canister.io:5000 --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
       export DEBIAN_FRONTEND=noninteractive
       apt-get update
@@ -17,8 +16,7 @@ stages:
       docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:latest
       docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:$RUN_NUMBER
       docker push cloud.canister.io:5000/eternalconcert/menial_2:latest
-      docker push cloud.canister.io:5000/eternalconcert/menial_2:RUN_NUMBER
+      docker push cloud.canister.io:5000/eternalconcert/menial_2:$RUN_NUMBER
     env:
       DOCKER_USERNAME: ${DOCKER_USERNAME}
       DOCKER_PASSWORD: ${DOCKER_PASSWORD}
-      DOCKER_PASSWORD: ${RUN_NUMBER}

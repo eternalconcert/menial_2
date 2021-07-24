@@ -12,6 +12,8 @@ use chrono::{DateTime, Utc};
 use ansi_term::Colour;
 
 fn main() {
+    log!("info", "Starting menial/2");
+
     let config = get_config();
 
     let listener = TcpListener::bind(format!("{}:{}", config.host, config.port)).unwrap();
@@ -28,7 +30,7 @@ fn main() {
     }
 }
 
-const SERVER_LINE: &str = "Server: menial 2";
+const SERVER_LINE: &str = "Server: menial/2";
 
 fn handle_connection(mut stream: TcpStream, document_root: &str, resources_root: &str) {
     let mut buffer = [0; 1024];

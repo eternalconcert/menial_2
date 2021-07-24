@@ -3,6 +3,7 @@ extern crate yaml_rust;
 
 
 use menial_2::{log, LOG_LEVEL, ThreadPool};
+use menial_2::config::{Config};
 use clap::{App, Arg};
 use std::fs;
 use std::io::prelude::*;
@@ -12,14 +13,6 @@ use std::path::Path;
 use chrono::{DateTime, Utc};
 use ansi_term::Colour;
 use yaml_rust::{YamlLoader};
-
-
-struct Config {
-    host: String,
-    port: String,
-    root: String,
-    resources: String,
-}
 
 
 fn get_config() -> Config {

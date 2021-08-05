@@ -13,17 +13,34 @@ use std::path::Path;
 
 fn main() {
     log!("info", "Starting menial/2");
-
     let config = get_config();
 
-    let listener = TcpListener::bind(format!("{}:{}", config.host, config.port)).unwrap();
+    log!("info", format!("Config file: {}", config[0].file));
+
+    let pool = ThreadPool::new(config.len());
+    for i in 0..config.len() {
+        log!("info", format!("Host: {}", config[i].host));
+        log!("info", format!("Port: {}", config[i].port));
+        log!("info", format!("Document root: {}", config[i].root));
+        log!("info", format!("Resources root: {}", config[i].resources));
+        pool.execute(move || {
+            run_server(i);
+        });
+    }
+
+}
+
+
+fn run_server(i: usize) {
+    let config = get_config();
+    let listener = TcpListener::bind(format!("{}:{}", config[i].host, config[i].port)).unwrap();
 
     let pool = ThreadPool::new(4);
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-        let root = config.root.to_owned();
-        let resources = config.resources.to_owned();
+        let root = config[i].root.to_owned();
+        let resources = config[i].resources.to_owned();
         pool.execute(move || {
             handle_connection(stream, &root, &resources);
         });
@@ -37,7 +54,7 @@ fn handle_connection(mut stream: TcpStream, document_root: &str, resources_root:
     stream.read(&mut buffer).unwrap();
 
     let request_content = String::from_utf8_lossy(&buffer);
-
+    log!("debug", request_content);
     let mut document = String::from("");
 
     match request_content.find("HTTP") {

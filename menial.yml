@@ -1,5 +1,10 @@
-host: localhost
-port: '8080'
-root: default
-resources: default/pages
+hosts:
+  localhost:
+    port: '8090'
+    root: default
+    resources: default/pages
+  192.168.178.36:
+    port: '8081'
+    root: /tmp/
+    resources: default/pages
 loglevel: info

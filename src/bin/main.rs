@@ -19,7 +19,7 @@ fn main() {
 
     let pool = ThreadPool::new(config.len());
     for i in 0..config.len() {
-        log!("info", format!("Host: {}", config[i].host));
+        log!("info", format!("Bind: {}", config[i].bind));
         log!("info", format!("Port: {}", config[i].port));
         log!("info", format!("Document root: {}", config[i].root));
         log!("info", format!("Resources root: {}", config[i].resources));
@@ -33,7 +33,7 @@ fn main() {
 
 fn run_server(i: usize) {
     let config = get_config();
-    let listener = TcpListener::bind(format!("{}:{}", config[i].host, config[i].port)).unwrap();
+    let listener = TcpListener::bind(format!("{}:{}", config[i].bind, config[i].port)).unwrap();
 
     let pool = ThreadPool::new(4);
 

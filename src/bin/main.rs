@@ -39,28 +39,50 @@ fn run_server(i: usize) {
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-        let root = config[i].root.to_owned();
-        let resources = config[i].resources.to_owned();
         pool.execute(move || {
-            handle_connection(stream, &root, &resources);
+            handle_connection(stream);
         });
     }
 }
 
 const SERVER_LINE: &str = "Server: menial/2";
 
-fn handle_connection(mut stream: TcpStream, document_root: &str, resources_root: &str) {
+fn handle_connection(mut stream: TcpStream) {
     let mut buffer = [0; 1024];
     stream.read(&mut buffer).unwrap();
 
     let request_content = String::from_utf8_lossy(&buffer);
     log!("debug", request_content);
     let mut document = String::from("");
-
-    match request_content.find("HTTP") {
-        Some(v) => document = String::from(&request_content[4..v - 1]),
-        None => {}
+    let mut host = String::from("");
+    
+    for line in request_content.split("\n") {
+        if line.starts_with("GET") || line.starts_with("POST") {
+            match line.find("HTTP") {
+                Some(v) => document = String::from(&line[4..v - 1]),
+                None => {}
+            }
+        }
+        else if line.starts_with("Host:") {
+            host = String::from(&line[6..line.len() - 1]);
+        }
     }
+    log!("debug", format!("Requested host: {}", host));
+    
+    let mut config_index = 0;
+    for (i, _) in get_config().iter().enumerate() {
+        let combined_host = String::from(format!("{}:{}", &get_config()[i].host, &get_config()[i].port));
+        if combined_host == host {
+            println!("{}", combined_host == host);
+            config_index = i;
+            
+        }
+        
+    }
+
+    let host_config = &get_config()[config_index];
+    let document_root = host_config.root.to_owned();
+    let resources_root = host_config.resources.to_owned();
 
     let mut status: u16 = 0;
 

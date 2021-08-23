@@ -10,20 +10,21 @@ use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::path::Path;
-use::std::collections::HashSet;
+use::std::collections::{HashSet};
 
 
 fn main() {
     log!("info", format!("Starting menial/2 ({})", *MENIAL_VERSION));
 
-    log!("info", format!("Config file: {}", CONFIG[0].file));
+    // log!("info", format!("Config file: {}", CONFIG.values()["0"]["file"]));
 
     let mut ports = HashSet::new();
 
-    for i in 0..CONFIG.len() {
-        ports.insert(CONFIG[i].port.to_owned());
-        log!("info", format!("Document root: {}", CONFIG[i].root));
-        log!("info", format!("Resources root: {}", CONFIG[i].resources));
+    for (_key, value) in CONFIG.iter() {
+
+        ports.insert(value.port.to_owned());
+        log!("info", format!("Document root: {}", value.root));
+        log!("info", format!("Resources root: {}", value.port));
     }
 
     let worker_count: usize = 20;  // What is a sane number for workers?
@@ -72,17 +73,15 @@ fn handle_connection(mut stream: TcpStream) {
             host = String::from(&line[6..line.len() - 1]);
         }
     }
-    log!("debug", format!("Requested host: {}", host));
+    log!("warning", format!("Requested host: {}", host));
     
-    let mut config_index = 0;
-    for (i, _) in CONFIG.iter().enumerate() {
-        let combined_host = String::from(format!("{}:{}", CONFIG[i].host, CONFIG[i].port));
-        if combined_host == host {
-            config_index = i;
-        }
+    let mut host_config = &CONFIG["localhost:8080"];
+    match CONFIG.get(&host) {
+        Some(conf) => host_config = conf,
+        _ => {
+            log!("warning", "Host not found");
+        },
     }
-
-    let host_config = &CONFIG[config_index];
     let document_root = host_config.root.to_owned();
     let resources_root = host_config.resources.to_owned();
 

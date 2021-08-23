@@ -75,7 +75,6 @@ pub fn _get_config() -> HashMap<std::string::String, Config> {
             let resources = item.1["resources"].as_str().unwrap();
 
             let combined_host = format!("{}:{}", item.0.as_str().unwrap().to_owned(), port);
-            println!("{}", combined_host);
             config.insert(
                 combined_host,
                 Config {

@@ -1,6 +1,7 @@
 extern crate clap;
 extern crate yaml_rust;
 
+use menial_2::config::Config;
 use ansi_term::Colour;
 use chrono::{DateTime, Utc};
 use menial_2::config::{CONFIG};
@@ -15,16 +16,16 @@ use::std::collections::{HashSet};
 
 fn main() {
     log!("info", format!("Starting menial/2 ({})", *MENIAL_VERSION));
-
-    // log!("info", format!("Config file: {}", CONFIG.values()["0"]["file"]));
+    let random_config = CONFIG.values().collect::<Vec<&Config>>()[0];
+    log!("info", format!("Config file: {}", random_config.file));
 
     let mut ports = HashSet::new();
 
-    for (_key, value) in CONFIG.iter() {
+    for (host, value) in CONFIG.iter() {
 
         ports.insert(value.port.to_owned());
-        log!("info", format!("Document root: {}", value.root));
-        log!("info", format!("Resources root: {}", value.port));
+        log!("info", format!("{}: Document root: {}", host, value.root));
+        log!("info", format!("{}: Resources root: {}", host, value.port));
     }
 
     let worker_count: usize = 20;  // What is a sane number for workers?
@@ -61,7 +62,7 @@ fn handle_connection(mut stream: TcpStream) {
     log!("debug", request_content);
     let mut document = String::from("");
     let mut host = String::from("");
-    
+
     for line in request_content.split("\n") {
         if line.starts_with("GET") || line.starts_with("POST") {
             match line.find("HTTP") {
@@ -73,9 +74,9 @@ fn handle_connection(mut stream: TcpStream) {
             host = String::from(&line[6..line.len() - 1]);
         }
     }
-    log!("warning", format!("Requested host: {}", host));
-    
-    let mut host_config = &CONFIG["localhost:8080"];
+    log!("debug", format!("Requested host: {}", host));
+
+    let mut host_config = CONFIG.values().collect::<Vec<&Config>>()[0];
     match CONFIG.get(&host) {
         Some(conf) => host_config = conf,
         _ => {
@@ -141,7 +142,7 @@ fn handle_connection(mut stream: TcpStream) {
         contents.len(),
     );
 
-    
+
     stream.write(response.as_bytes()).unwrap();
     match stream.write_all(&contents) {
         Ok(_) => {

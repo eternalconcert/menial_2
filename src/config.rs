@@ -1,17 +1,17 @@
 use clap::{App, Arg};
+use lazy_static::lazy_static;
 use std::fs;
 use yaml_rust::YamlLoader;
 
 pub struct Config {
     pub file: String,
     pub host: String,
-    pub bind: String,
     pub port: String,
     pub root: String,
     pub resources: String,
 }
 
-pub fn get_config() -> Vec<Config> {
+pub fn _get_config() -> Vec<Config> {
     let matches = App::new("Menial 2")
         .arg(
             Arg::with_name("host")
@@ -19,14 +19,6 @@ pub fn get_config() -> Vec<Config> {
                 .long("host")
                 .value_name("host")
                 .help("The host to run")
-        )
-        .arg(
-            Arg::with_name("bind")
-                .short("b")
-                .long("bind")
-                .value_name("bind")
-                .help("The host to bind at")
-                .takes_value(true),
         )
         .arg(
             Arg::with_name("port")
@@ -75,14 +67,12 @@ pub fn get_config() -> Vec<Config> {
         let mut res = Vec::with_capacity(hosts.as_hash().unwrap().len());
 
         for item in hosts.as_hash().unwrap() {
-            let bind = item.1["bind"].as_str().unwrap_or("0.0.0.0");
             let port = item.1["port"].as_str().unwrap();
             let root = item.1["root"].as_str().unwrap();
             let resources = item.1["resources"].as_str().unwrap();
             res.push(Config {
                 file: String::from(conf.to_owned()),
                 host: item.0.as_str().unwrap().to_owned(),
-                bind: bind.to_owned(),
                 port: port.to_owned(),
                 root: root.to_owned(),
                 resources: resources.to_owned(),
@@ -93,7 +83,6 @@ pub fn get_config() -> Vec<Config> {
     } else {
         let mut res = Vec::with_capacity(1);
         let host = matches.value_of("host").unwrap_or("127.0.0.1").to_owned();
-        let bind = matches.value_of("bind").unwrap_or("0.0.0.0").to_owned();
         let port = matches.value_of("port").unwrap_or("8080").to_owned();
         let root = String::from(matches.value_of("root").unwrap_or("default")).to_owned();
         let resources =
@@ -101,11 +90,14 @@ pub fn get_config() -> Vec<Config> {
         res.push(Config {
             host: host,
             file: String::from("None"),
-            bind: bind,
             port: port,
             root: root,
             resources: resources,
         });
         return res;
     }
+}
+
+lazy_static! {
+    pub static ref CONFIG: Vec<Config> = _get_config();
 }

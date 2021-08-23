@@ -3,37 +3,42 @@ extern crate yaml_rust;
 
 use ansi_term::Colour;
 use chrono::{DateTime, Utc};
-use menial_2::config::get_config;
-use menial_2::{log, ThreadPool, LOG_LEVEL};
+use menial_2::config::{CONFIG};
+use menial_2::{log, ThreadPool, LOG_LEVEL, MENIAL_VERSION};
 use std::fs;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::path::Path;
+use::std::collections::HashSet;
+
 
 fn main() {
-    log!("info", "Starting menial/2");
-    let config = get_config();
+    log!("info", format!("Starting menial/2 ({})", *MENIAL_VERSION));
 
-    log!("info", format!("Config file: {}", config[0].file));
+    log!("info", format!("Config file: {}", CONFIG[0].file));
 
-    let pool = ThreadPool::new(config.len());
-    for i in 0..config.len() {
-        log!("info", format!("Bind: {}", config[i].bind));
-        log!("info", format!("Port: {}", config[i].port));
-        log!("info", format!("Document root: {}", config[i].root));
-        log!("info", format!("Resources root: {}", config[i].resources));
-        pool.execute(move || {
-            run_server(i);
-        });
+    let mut ports = HashSet::new();
+
+    for i in 0..CONFIG.len() {
+        ports.insert(CONFIG[i].port.to_owned());
+        log!("info", format!("Document root: {}", CONFIG[i].root));
+        log!("info", format!("Resources root: {}", CONFIG[i].resources));
     }
 
+    let worker_count: usize = 20;  // What is a sane number for workers?
+    log!("info", format!("Using {} workers", worker_count));
+    let pool = ThreadPool::new(worker_count);
+    for port in ports {
+        log!("info", format!("Listening on port: {}", port));
+        pool.execute(move || {
+            run_server(port.parse::<usize>().unwrap());
+        });
+    }
 }
 
-
-fn run_server(i: usize) {
-    let config = get_config();
-    let listener = TcpListener::bind(format!("{}:{}", config[i].bind, config[i].port)).unwrap();
+fn run_server(port: usize) {
+    let listener = TcpListener::bind(format!("{}:{}", "0.0.0.0", port)).unwrap();
 
     let pool = ThreadPool::new(4);
 
@@ -70,17 +75,14 @@ fn handle_connection(mut stream: TcpStream) {
     log!("debug", format!("Requested host: {}", host));
     
     let mut config_index = 0;
-    for (i, _) in get_config().iter().enumerate() {
-        let combined_host = String::from(format!("{}:{}", &get_config()[i].host, &get_config()[i].port));
+    for (i, _) in CONFIG.iter().enumerate() {
+        let combined_host = String::from(format!("{}:{}", CONFIG[i].host, CONFIG[i].port));
         if combined_host == host {
-            println!("{}", combined_host == host);
             config_index = i;
-            
         }
-        
     }
 
-    let host_config = &get_config()[config_index];
+    let host_config = &CONFIG[config_index];
     let document_root = host_config.root.to_owned();
     let resources_root = host_config.resources.to_owned();
 
@@ -140,8 +142,17 @@ fn handle_connection(mut stream: TcpStream) {
         contents.len(),
     );
 
+    
     stream.write(response.as_bytes()).unwrap();
-    stream.write_all(&contents).unwrap();
+    match stream.write_all(&contents) {
+        Ok(_) => {
+            log!("debug", "Read content successfull");
+        },
+        Err(ref _e) => {
+            log!("error", "Could not write buffer!");
+            panic!("could not write buffer!")
+        },
+    };
 
     stream.flush().unwrap();
 }

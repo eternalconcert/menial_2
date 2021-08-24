@@ -74,13 +74,19 @@ fn handle_connection(mut stream: TcpStream) {
             host = String::from(&line[6..line.len() - 1]);
         }
     }
+
+    if host.find(":").unwrap_or(0) == 0 {
+        host = format!("{}:{}", host, "80")
+
+    }
+
     log!("debug", format!("Requested host: {}", host));
 
     let mut host_config = CONFIG.values().collect::<Vec<&Config>>()[0];
     match CONFIG.get(&host) {
         Some(conf) => host_config = conf,
         _ => {
-            log!("warning", "Host not found");
+            log!("debug", "Host not found");
         },
     }
     let document_root = host_config.root.to_owned();
@@ -142,15 +148,14 @@ fn handle_connection(mut stream: TcpStream) {
         contents.len(),
     );
 
-
     stream.write(response.as_bytes()).unwrap();
     match stream.write_all(&contents) {
         Ok(_) => {
-            log!("debug", "Read content successfull");
+            log!("debug", "Write content successfull");
         },
         Err(ref _e) => {
-            log!("error", "Could not write buffer!");
-            panic!("could not write buffer!")
+            log!("warning", "Could not write buffer!");
+            // panic!("could not write buffer!")
         },
     };
 

@@ -1,6 +1,6 @@
 hosts:
-  test.localhost:
-    port: '8080'
+  localhost:
+    port: '80'
     root: default
     resources: default/pages
   test2.localhost:

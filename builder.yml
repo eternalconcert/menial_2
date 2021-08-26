@@ -4,9 +4,8 @@ stages:
   - name: build
     run: |
       docker login cloud.canister.io:5000 --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
-      export MENIAL_VERSION=$MAJOR_VERSION$BUILDER_RUN
+      export MENIAL_VERSION=$BUILDER_RUN
       echo Building $MENIAL_VERSION
-      echo $BUILDER_RUN
       export DEBIAN_FRONTEND=noninteractive
       apt-get update
       apt-get install wget build-essential -y
@@ -17,11 +16,9 @@ stages:
       cp target/release/main /out/
       docker build . -t menial_2 --no-cache
       docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:latest
-      docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:$RUN_NUMBER
+      docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:$BUILDER_RUN
       docker push cloud.canister.io:5000/eternalconcert/menial_2:latest
-      docker push cloud.canister.io:5000/eternalconcert/menial_2:$RUN_NUMBER
+      docker push cloud.canister.io:5000/eternalconcert/menial_2:$BUILDER_RUN
     env:
       DOCKER_USERNAME: ${DOCKER_USERNAME}
       DOCKER_PASSWORD: ${DOCKER_PASSWORD}
-      RUN_NUMBER: ${RUN_NUMBER}
-      MAJOR_VERSION: 2.0.

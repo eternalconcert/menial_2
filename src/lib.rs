@@ -14,10 +14,6 @@ lazy_static! {
     pub static ref LOG_LEVEL: String = env::var("LOGLEVEL").unwrap_or(String::from("INFO"));
 }
 
-lazy_static! {
-    pub static ref MENIAL_VERSION: String = env::var("MENIAL_VERSION").unwrap_or(String::from("DEV"));
-}
-
 type Job = Box<dyn FnOnce() + Send + 'static>;
 
 enum Message {

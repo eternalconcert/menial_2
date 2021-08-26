@@ -5,7 +5,7 @@ use menial_2::config::Config;
 use ansi_term::Colour;
 use chrono::{DateTime, Utc};
 use menial_2::config::{CONFIG};
-use menial_2::{log, ThreadPool, LOG_LEVEL, MENIAL_VERSION};
+use menial_2::{log, ThreadPool, LOG_LEVEL};
 use std::fs;
 use std::io::prelude::*;
 use std::net::TcpListener;
@@ -15,7 +15,9 @@ use::std::collections::{HashSet};
 
 
 fn main() {
-    log!("info", format!("Starting menial/2 ({})", *MENIAL_VERSION));
+    let menial_version: &'static str = option_env!("MENIAL_VERSION").unwrap_or("DEV");
+
+    log!("info", format!("Starting menial/2 ({})", menial_version));
     let random_config = CONFIG.values().collect::<Vec<&Config>>()[0];
     log!("info", format!("Config file: {}", random_config.file));
 

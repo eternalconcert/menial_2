@@ -12,7 +12,7 @@ stages:
       source $HOME/.cargo/env
       cargo build --release
       cp target/release/main /out/
-      docker build . -t menial_2
+      docker build . -t menial_2 --no-cache
       docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:latest
       docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:$RUN_NUMBER
       docker push cloud.canister.io:5000/eternalconcert/menial_2:latest

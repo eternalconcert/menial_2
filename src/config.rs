@@ -70,16 +70,23 @@ pub fn _get_config() -> HashMap<std::string::String, Config> {
         let hosts = &doc["hosts"];
 
         for item in hosts.as_hash().unwrap() {
-            let port = item.1["port"].as_str().unwrap();
+            let combined_host = &item.0.as_str().unwrap().to_owned();
+
+            let port;
+            if combined_host.split(":").count() == 2 {
+                port = combined_host.split(":").collect::<Vec<&str>>()[1];
+            } else {
+                port = "80";
+            }
+            
             let root = item.1["root"].as_str().unwrap();
             let resources = item.1["resources"].as_str().unwrap();
 
-            let combined_host = format!("{}:{}", item.0.as_str().unwrap().to_owned(), port);
             config.insert(
-                combined_host,
+                combined_host.to_owned(),
                 Config {
                     file: String::from(path.to_owned()),
-                    host: item.0.as_str().unwrap().to_owned(),
+                    host: combined_host.to_owned(),
                     port: port.to_owned(),
                     root: root.to_owned(),
                     resources: resources.to_owned(),

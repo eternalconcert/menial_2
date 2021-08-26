@@ -4,7 +4,7 @@ stages:
   - name: build
     run: |
       docker login cloud.canister.io:5000 --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
-      export MENIAL_VERSION=$VERSION$RUN_NUMBER
+      export MENIAL_VERSION=$VERSION
       echo Building $MENIAL_VERSION
       export DEBIAN_FRONTEND=noninteractive
       apt-get update

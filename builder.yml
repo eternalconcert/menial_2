@@ -6,6 +6,7 @@ stages:
       docker login cloud.canister.io:5000 --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
       export MENIAL_VERSION=$MAJOR_VERSION$BUILDER_RUN
       echo Building $MENIAL_VERSION
+      echo $BUILDER_RUN
       export DEBIAN_FRONTEND=noninteractive
       apt-get update
       apt-get install wget build-essential -y

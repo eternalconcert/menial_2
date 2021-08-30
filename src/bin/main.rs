@@ -11,8 +11,9 @@ use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::path::Path;
-use::std::collections::{HashSet};
-
+use std::collections::{HashSet};
+use openssl::ssl::{SslMethod, SslAcceptor, SslStream, SslFiletype};
+use std::sync::Arc;
 
 fn main() {
     let menial_version: &'static str = option_env!("MENIAL_VERSION").unwrap_or("DEV");
@@ -39,6 +40,34 @@ fn main() {
             run_server(port.parse::<usize>().unwrap());
         });
     }
+
+    // pool.execute(move || {
+    //     run_ssl_server(4433);
+    // });
+}
+
+fn run_ssl_server(port: usize) {
+    let mut acceptor = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
+    acceptor.set_private_key_file("/tmp/key.pem", SslFiletype::PEM).unwrap();
+    acceptor.set_certificate_chain_file("/tmp/cert.pem").unwrap();
+    acceptor.check_private_key().unwrap();
+
+    let acceptor = Arc::new(acceptor.build());
+
+    let listener = TcpListener::bind(format!("{}:{}", "0.0.0.0", port)).unwrap();
+
+    let pool = ThreadPool::new(4);
+
+    for stream in listener.incoming() {
+        let stream = stream.unwrap();
+        let acceptor = acceptor.clone();
+
+        pool.execute(move || {
+            let stream = acceptor.accept(stream).unwrap();
+            handle_ssl_connection(stream);
+        });
+    }
+
 }
 
 fn run_server(port: usize) {
@@ -56,10 +85,51 @@ fn run_server(port: usize) {
 
 const SERVER_LINE: &str = "Server: menial/2";
 
+
 fn handle_connection(mut stream: TcpStream) {
     let mut buffer = [0; 1024];
     stream.read(&mut buffer).unwrap();
 
+    let (response, contents) = handle_request(buffer);
+
+    stream.write(response.as_bytes()).unwrap();
+    match stream.write_all(&contents) {
+        Ok(_) => {
+            log!("debug", "Write content successfull");
+        },
+        Err(ref _e) => {
+            log!("warning", "Could not write buffer!");
+            // panic!("could not write buffer!")
+        },
+    };
+
+    stream.flush().unwrap();
+}
+
+
+fn handle_ssl_connection(mut stream: SslStream<TcpStream>) {
+    let mut buffer = [0; 1024];
+    stream.read(&mut buffer).unwrap();
+
+    let (response, contents) = handle_request(buffer);
+
+    stream.write(response.as_bytes()).unwrap();
+    match stream.write_all(&contents) {
+        Ok(_) => {
+            log!("debug", "Write content successfull");
+        },
+        Err(ref _e) => {
+            log!("warning", "Could not write buffer!");
+            // panic!("could not write buffer!")
+        },
+    };
+
+    stream.flush().unwrap();
+}
+
+
+
+fn handle_request(buffer: [u8; 1024]) -> (String, Vec<u8>) {
     let request_content = String::from_utf8_lossy(&buffer);
     log!("debug", request_content);
     let mut document = String::from("");
@@ -149,17 +219,5 @@ fn handle_connection(mut stream: TcpStream) {
         SERVER_LINE,
         contents.len(),
     );
-
-    stream.write(response.as_bytes()).unwrap();
-    match stream.write_all(&contents) {
-        Ok(_) => {
-            log!("debug", "Write content successfull");
-        },
-        Err(ref _e) => {
-            log!("warning", "Could not write buffer!");
-            // panic!("could not write buffer!")
-        },
-    };
-
-    stream.flush().unwrap();
+    return (response, contents);
 }

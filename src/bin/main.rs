@@ -1,7 +1,8 @@
 extern crate clap;
 extern crate yaml_rust;
+extern crate num_cpus;
 
-use menial_2::config::Config;
+use menial_2::config::HostConfig;
 use ansi_term::Colour;
 use chrono::{DateTime, Utc};
 use menial_2::config::{CONFIG};
@@ -15,41 +16,62 @@ use std::collections::{HashSet};
 use openssl::ssl::{SslMethod, SslAcceptor, SslStream, SslFiletype};
 use std::sync::Arc;
 
-fn main() {
-    let menial_version: &'static str = option_env!("MENIAL_VERSION").unwrap_or("DEV");
-
-    log!("info", format!("Starting menial/2 ({})", menial_version));
-    let random_config = CONFIG.values().collect::<Vec<&Config>>()[0];
-    log!("info", format!("Config file: {}", random_config.file));
-
+fn get_ports() -> HashSet<String> {
     let mut ports = HashSet::new();
-
-    for (host, value) in CONFIG.iter() {
+    for (host, value) in CONFIG.host_configs.iter() {
 
         ports.insert(value.port.to_owned());
         log!("info", format!("{}: Document root: {}", host, value.root));
         log!("info", format!("{}: Resources root: {}", host, value.port));
     }
+    return ports;
+}
 
-    let worker_count: usize = 20;  // What is a sane number for workers?
+fn get_ssl_ports() -> HashSet<String> {
+    let mut ssl_port = HashSet::new();
+    for (port, _) in CONFIG.ssl_config.iter() {
+
+        ssl_port.insert(port.to_owned());
+        // log!("info", format!("{}: Document root: {}", host, value.root));
+        // log!("info", format!("{}: Resources root: {}", host, value.port));
+    }
+    return ssl_port;
+}
+
+fn main() {
+    let menial_version: &'static str = option_env!("MENIAL_VERSION").unwrap_or("DEV");
+
+    log!("info", format!("Starting menial/2 ({})", menial_version));
+    log!("info", format!("Config file: {}", CONFIG.file));
+
+    let ports = get_ports();
+    let ssl_ports = get_ssl_ports();
+
+    let worker_count: usize = num_cpus::get();
     log!("info", format!("Using {} workers", worker_count));
     let pool = ThreadPool::new(worker_count);
     for port in ports {
-        log!("info", format!("Listening on port: {}", port));
-        pool.execute(move || {
-            run_server(port.parse::<usize>().unwrap());
-        });
+        if ssl_ports.contains(&port) {
+            pool.execute(move || {
+                log!("info", format!("Listening on ssl port: {}", port));
+                run_ssl_server(port.parse::<usize>().unwrap());
+            });
+        } else {
+            pool.execute(move || {
+                log!("info", format!("Listening on normal port: {}", port));
+                run_server(port.parse::<usize>().unwrap());
+            });            
+        }
+        
     }
-
-    // pool.execute(move || {
-    //     run_ssl_server(4433);
-    // });
 }
 
 fn run_ssl_server(port: usize) {
     let mut acceptor = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
-    acceptor.set_private_key_file("/tmp/key.pem", SslFiletype::PEM).unwrap();
-    acceptor.set_certificate_chain_file("/tmp/cert.pem").unwrap();
+    let key = &CONFIG.ssl_config[&port.to_string()].key;
+    let cert = &CONFIG.ssl_config[&port.to_string()].cert;
+    acceptor.set_private_key_file(key, SslFiletype::PEM).unwrap();
+    acceptor.set_certificate_chain_file(cert).unwrap();
     acceptor.check_private_key().unwrap();
 
     let acceptor = Arc::new(acceptor.build());
@@ -63,11 +85,16 @@ fn run_ssl_server(port: usize) {
         let acceptor = acceptor.clone();
 
         pool.execute(move || {
-            let stream = acceptor.accept(stream).unwrap();
-            handle_ssl_connection(stream);
+            match acceptor.accept(stream) {
+                Ok(stream) => {
+                    handle_ssl_connection(stream);
+                }
+                Err(_) => {
+                    log!("debug", "Not an HTTPS request");
+                }
+            }
         });
     }
-
 }
 
 fn run_server(port: usize) {
@@ -154,8 +181,8 @@ fn handle_request(buffer: [u8; 1024]) -> (String, Vec<u8>) {
 
     log!("debug", format!("Requested host: {}", host));
 
-    let mut host_config = CONFIG.values().collect::<Vec<&Config>>()[0];
-    match CONFIG.get(&host) {
+    let mut host_config = CONFIG.host_configs.values().collect::<Vec<&HostConfig>>()[0];
+    match CONFIG.host_configs.get(&host) {
         Some(conf) => host_config = conf,
         _ => {
             log!("debug", "Host not found");

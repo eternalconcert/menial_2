@@ -1,3 +1,4 @@
+loglevel: info
 hosts:
   localhost:8080:
     root: default
@@ -5,4 +6,7 @@ hosts:
   test.localhost:8080:
     root: /tmp/
     resources: default/pages
-loglevel: debug
+ssl:
+  4433:
+    key: key.pem
+    cert: cert.pem

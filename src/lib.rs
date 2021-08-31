@@ -1,7 +1,7 @@
 pub use ansi_term::Colour;
 use chrono::{DateTime, Utc};
+use crate::config::{CONFIG};
 use lazy_static::lazy_static;
-use std::env;
 use std::sync::mpsc;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -11,7 +11,7 @@ pub mod config;
 pub mod logger;
 
 lazy_static! {
-    pub static ref LOG_LEVEL: String = env::var("LOGLEVEL").unwrap_or(String::from("INFO"));
+    pub static ref LOG_LEVEL: String = CONFIG.loglevel.to_owned();
 }
 
 type Job = Box<dyn FnOnce() + Send + 'static>;

@@ -4,8 +4,8 @@ use std::fs;
 use yaml_rust::YamlLoader;
 use::std::collections::HashMap;
 
-pub struct Config {
-    pub file: String,
+
+pub struct HostConfig {
     pub host: String,
     pub port: String,
     pub root: String,
@@ -13,8 +13,26 @@ pub struct Config {
 }
 
 
-pub fn _get_config() -> HashMap<std::string::String, Config> {
-    let mut config = HashMap::new();
+
+pub struct SslConfig {
+    pub port: String,
+    pub key: String,
+    pub cert: String,
+}
+
+
+pub struct Config {
+    pub file: String,
+    pub loglevel: String,
+    pub ssl_config: HashMap<String, SslConfig>,
+    pub host_configs: HashMap<String, HostConfig>,
+}
+
+
+pub fn _get_config() -> Config {
+    
+    let mut host_config = HashMap::new();
+    let mut ssl_config = HashMap::new();
 
     let matches = App::new("Menial 2")
     .arg(
@@ -56,6 +74,30 @@ pub fn _get_config() -> HashMap<std::string::String, Config> {
             .help("The document conf")
             .takes_value(true),
     )
+    .arg(
+        Arg::with_name("key")
+            .short("k")
+            .long("key")
+            .value_name("key")
+            .help("The ssl key")
+            .takes_value(true),
+    )
+    .arg(
+        Arg::with_name("cert")
+            .short("c")
+            .long("cert")
+            .value_name("cert")
+            .help("The ssl cert")
+            .takes_value(true),
+    )
+    .arg(
+        Arg::with_name("loglevel")
+            .short("l")
+            .long("loglevel")
+            .value_name("loglevel")
+            .help("The loglevel")
+            .takes_value(true),
+    )
     .get_matches();
 
     let config_path = String::from(matches.value_of("file").unwrap_or(""));
@@ -68,7 +110,7 @@ pub fn _get_config() -> HashMap<std::string::String, Config> {
         let doc = &docs[0];
 
         let hosts = &doc["hosts"];
-
+        
         for item in hosts.as_hash().unwrap() {
             let combined_host = &item.0.as_str().unwrap().to_owned();
 
@@ -82,10 +124,9 @@ pub fn _get_config() -> HashMap<std::string::String, Config> {
             let root = item.1["root"].as_str().unwrap();
             let resources = item.1["resources"].as_str().unwrap();
 
-            config.insert(
+            host_config.insert(
                 combined_host.to_owned(),
-                Config {
-                    file: String::from(path.to_owned()),
+                HostConfig {
                     host: combined_host.to_owned(),
                     port: port.to_owned(),
                     root: root.to_owned(),
@@ -93,29 +134,70 @@ pub fn _get_config() -> HashMap<std::string::String, Config> {
                 },
             );
         };
-        return config;
+
+        let ssl = &doc["ssl"];
+        for item in ssl.as_hash().unwrap() {
+            let ssl_port = &item.0.as_i64().unwrap();
+            ssl_config.insert(
+                ssl_port.to_string(),
+                SslConfig {
+                    port: ssl_port.to_string(),
+                    key: item.1["key"].as_str().unwrap().to_string(),
+                    cert: item.1["cert"].as_str().unwrap().to_string(),
+                }
+            );
+        }
+
+        let loglevel = &doc["loglevel"].as_str().unwrap_or("info");
+
+        return Config {
+            file: String::from(path.to_owned()),
+            loglevel: loglevel.to_string(),
+            ssl_config: ssl_config,
+            host_configs: host_config,
+        };
 
     } else {
         let host = matches.value_of("host").unwrap_or("127.0.0.1").to_owned();
         let port = matches.value_of("port").unwrap_or("8080").to_owned();
         let root = String::from(matches.value_of("root").unwrap_or("default")).to_owned();
-        let resources =
-            String::from(matches.value_of("resources").unwrap_or("default/pages")).to_owned();
-            let combined_host = format!("{}:{}", host.to_owned(), port);
-            config.insert(
-                combined_host,
-                Config {
-                    host: host.to_owned(),
-                    file: String::from("None"),
-                    port: port,
-                    root: root,
-                    resources: resources,
-                },
+        let loglevel = matches.value_of("loglevel").unwrap_or("info").to_owned();
+        let key = String::from(matches.value_of("key").unwrap_or("")).to_owned();
+        let cert = String::from(matches.value_of("cert").unwrap_or("")).to_owned();
+
+        let resources = String::from(matches.value_of("resources").unwrap_or("default/pages")).to_owned();
+        let combined_host = format!("{}:{}", host.to_owned(), port);
+
+        host_config.insert(
+            combined_host,
+            HostConfig {
+                host: host.to_owned(),
+                port: port.to_owned(),
+                root: root,
+                resources: resources,
+            },
+        );
+
+        if key != "" && cert != "" {
+            ssl_config.insert(
+                port.to_owned(),
+                SslConfig {
+                    port: port.to_owned(),
+                    key: key,
+                    cert: cert,
+                }
             );
-        return config;
+        }
+
+        return Config {
+            file: String::from("None"),
+            loglevel: loglevel,
+            ssl_config: ssl_config,
+            host_configs: host_config,
+        };
     }
 }
 
 lazy_static! {
-    pub static ref CONFIG: HashMap<String, Config> = _get_config();
+    pub static ref CONFIG: Config = _get_config();
 }

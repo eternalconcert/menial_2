@@ -12,7 +12,7 @@ macro_rules! log {
             $text
         ));
 
-        if *LOG_LEVEL == "DEBUG" {
+        if *LOG_LEVEL.to_lowercase() == String::from("debug") {
             let val = formatted.to_owned();
             match $level {
                 "debug" => println!("{}", Colour::Green.paint(val)),
@@ -23,7 +23,7 @@ macro_rules! log {
             }
         };
 
-        if *LOG_LEVEL == "INFO" {
+        if *LOG_LEVEL.to_lowercase() == String::from("info") {
             let val = formatted.to_owned();
             match $level {
                 "info" => println!("{}", val),
@@ -33,7 +33,7 @@ macro_rules! log {
             }
         };
 
-        if *LOG_LEVEL == "WARNING" {
+        if *LOG_LEVEL.to_lowercase() == String::from("warning") {
             let val = formatted.to_owned();
             match $level {
                 "warning" => println!("{}", Colour::Yellow.paint(val)),
@@ -42,7 +42,7 @@ macro_rules! log {
             }
         };
 
-        if *LOG_LEVEL == "ERROR" {
+        if *LOG_LEVEL.to_lowercase() == String::from("error") {
             let val = formatted.to_owned();
             match $level {
                 "error" => println!("{}", Colour::Red.paint(val)),

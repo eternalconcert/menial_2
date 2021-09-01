@@ -29,7 +29,7 @@ pub struct Config {
 
 
 pub fn _get_config() -> Config {
-    
+
     let mut host_config = HashMap::new();
     let mut ssl_config = HashMap::new();
 
@@ -109,7 +109,7 @@ pub fn _get_config() -> Config {
         let doc = &docs[0];
 
         let hosts = &doc["hosts"];
-        
+
         for item in hosts.as_hash().unwrap() {
             let combined_host = &item.0.as_str().unwrap().to_owned();
 
@@ -119,7 +119,7 @@ pub fn _get_config() -> Config {
             } else {
                 port = "80";
             }
-            
+
             let root = item.1["root"].as_str().unwrap();
             let resources = item.1["resources"].as_str().unwrap();
 

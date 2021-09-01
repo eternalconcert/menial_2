@@ -1,14 +1,16 @@
-pub use ansi_term::Colour;
 use chrono::{DateTime, Utc};
 use crate::config::{CONFIG};
+
+use ansi_term::Colour;
 use lazy_static::lazy_static;
-use std::sync::mpsc;
 use std::sync::Arc;
+use std::sync::mpsc;
 use std::sync::Mutex;
 use std::thread;
 
 pub mod config;
 pub mod logger;
+pub mod server;
 
 lazy_static! {
     pub static ref LOG_LEVEL: String = CONFIG.loglevel.to_owned();

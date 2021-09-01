@@ -12,7 +12,6 @@ use std::net::TcpStream;
 use std::path::Path;
 use std::sync::Arc;
 
-
 pub fn get_ports() -> HashSet<String> {
     let mut ports = HashSet::new();
     for (host, value) in CONFIG.host_configs.iter() {

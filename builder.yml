@@ -7,7 +7,7 @@ stages:
       export MENIAL_VERSION=$MAJOR_VERSION$BUILDER_RUN
       export DEBIAN_FRONTEND=noninteractive
       apt-get update
-      apt-get install wget build-essential libssl-dev -y
+      apt-get install wget build-essential libssl-dev pkg-config -y
       wget https://sh.rustup.rs -O rustup.sh
       sh rustup.sh -y
       source $HOME/.cargo/env

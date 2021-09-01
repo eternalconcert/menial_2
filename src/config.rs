@@ -13,7 +13,6 @@ pub struct HostConfig {
 }
 
 
-
 pub struct SslConfig {
     pub port: String,
     pub key: String,

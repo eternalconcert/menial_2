@@ -32,8 +32,6 @@ fn get_ssl_ports() -> HashSet<String> {
     for (port, _) in CONFIG.ssl_config.iter() {
 
         ssl_port.insert(port.to_owned());
-        // log!("info", format!("{}: Document root: {}", host, value.root));
-        // log!("info", format!("{}: Resources root: {}", host, value.port));
     }
     return ssl_port;
 }

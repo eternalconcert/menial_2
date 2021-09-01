@@ -81,7 +81,7 @@ fn handle_connection(mut stream: TcpStream) {
     let mut buffer = [0; 1024];
     stream.read(&mut buffer).unwrap();
 
-    let (response, contents) = handle_request(buffer);
+    let (response, contents) = handle_request(buffer, "80");
 
     stream.write(response.as_bytes()).unwrap();
     match stream.write_all(&contents) {
@@ -102,7 +102,7 @@ fn handle_ssl_connection(mut stream: SslStream<TcpStream>) {
     let mut buffer = [0; 1024];
     stream.read(&mut buffer).unwrap();
 
-    let (response, contents) = handle_request(buffer);
+    let (response, contents) = handle_request(buffer, "443");
 
     stream.write(response.as_bytes()).unwrap();
     match stream.write_all(&contents) {
@@ -121,7 +121,7 @@ fn handle_ssl_connection(mut stream: SslStream<TcpStream>) {
 
 const SERVER_LINE: &str = "Server: menial/2";
 
-fn handle_request(buffer: [u8; 1024]) -> (String, Vec<u8>) {
+fn handle_request(buffer: [u8; 1024], default_host: &str) -> (String, Vec<u8>) {
     let request_content = String::from_utf8_lossy(&buffer);
     log!("debug", request_content);
     let mut document = String::from("");
@@ -140,7 +140,7 @@ fn handle_request(buffer: [u8; 1024]) -> (String, Vec<u8>) {
     }
 
     if host.find(":").unwrap_or(0) == 0 {
-        host = format!("{}:{}", host, "80")
+        host = format!("{}:{}", host, default_host)
 
     }
 

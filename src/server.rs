@@ -18,7 +18,7 @@ pub fn get_ports() -> HashSet<String> {
 
         ports.insert(value.port.to_owned());
         log!("info", format!("{}: Document root: {}", host, value.root));
-        log!("info", format!("{}: Resources root: {}", host, value.port));
+        log!("info", format!("{}: Resources root: {}", host, value.resources));
     }
     return ports;
 }

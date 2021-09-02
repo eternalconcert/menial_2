@@ -137,8 +137,8 @@ pub fn _get_config() -> Config {
                 port = "80";
             }
 
-            let root = item.1["root"].as_str().unwrap();
-            let resources = item.1["resources"].as_str().unwrap();
+            let root = item.1["root"].as_str().unwrap_or("");
+            let resources = item.1["resources"].as_str().unwrap_or("");
             let redirect_to = item.1["redirect_to"].as_str().unwrap_or("");
             let redirect_permanent = item.1["redirect_permanent"].as_bool().unwrap_or(false);
 
@@ -187,7 +187,7 @@ pub fn _get_config() -> Config {
 
         let resources = String::from(matches.value_of("resources").unwrap_or("default/pages")).to_owned();
         let combined_host = format!("{}:{}", host.to_owned(), port);
-        
+
         let redirect_to = matches.value_of("redirect_to").unwrap_or("").to_owned();
         let redirect_permanent = matches.is_present("redirect_permanent");
 

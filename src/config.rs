@@ -10,6 +10,8 @@ pub struct HostConfig {
     pub port: String,
     pub root: String,
     pub resources: String,
+    pub redirect_to: String,
+    pub redirect_permanent: bool,
 }
 
 
@@ -97,6 +99,21 @@ pub fn _get_config() -> Config {
             .help("The loglevel")
             .takes_value(true),
     )
+    .arg(
+        Arg::with_name("redirect_to")
+            .short("t")
+            .long("redirect_to")
+            .value_name("redirect_to")
+            .help("The redirect target")
+            .takes_value(true),
+    )
+    .arg(
+        Arg::with_name("redirect_permanent")
+            .short("u")
+            .long("redirect_permanent")
+            .value_name("redirect_permanent")
+            .help("Should redirect permanent"),
+    )
     .get_matches();
 
     let config_path = String::from(matches.value_of("file").unwrap_or(""));
@@ -122,6 +139,8 @@ pub fn _get_config() -> Config {
 
             let root = item.1["root"].as_str().unwrap();
             let resources = item.1["resources"].as_str().unwrap();
+            let redirect_to = item.1["redirect_to"].as_str().unwrap_or("");
+            let redirect_permanent = item.1["redirect_permanent"].as_bool().unwrap_or(false);
 
             host_config.insert(
                 combined_host.to_owned(),
@@ -130,6 +149,8 @@ pub fn _get_config() -> Config {
                     port: port.to_owned(),
                     root: root.to_owned(),
                     resources: resources.to_owned(),
+                    redirect_to: redirect_to.to_owned(),
+                    redirect_permanent: redirect_permanent,
                 },
             );
         };
@@ -166,6 +187,10 @@ pub fn _get_config() -> Config {
 
         let resources = String::from(matches.value_of("resources").unwrap_or("default/pages")).to_owned();
         let combined_host = format!("{}:{}", host.to_owned(), port);
+        
+        let redirect_to = matches.value_of("redirect_to").unwrap_or("").to_owned();
+        let redirect_permanent = matches.is_present("redirect_permanent");
+
 
         host_config.insert(
             combined_host,
@@ -174,6 +199,8 @@ pub fn _get_config() -> Config {
                 port: port.to_owned(),
                 root: root,
                 resources: resources,
+                redirect_to: redirect_to,
+                redirect_permanent: redirect_permanent,
             },
         );
 

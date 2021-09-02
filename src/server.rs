@@ -147,12 +147,32 @@ fn handle_request(buffer: [u8; 1024], default_host: &str) -> (String, Vec<u8>) {
     log!("debug", format!("Requested host: {}", host));
 
     let mut host_config = CONFIG.host_configs.values().collect::<Vec<&HostConfig>>()[0];
+
     match CONFIG.host_configs.get(&host) {
         Some(conf) => host_config = conf,
         _ => {
             log!("debug", "Host not found");
         },
     }
+
+
+    if host_config.redirect_to != "" {
+        let status_line;
+        if host_config.redirect_permanent {
+            status_line = "HTTP/1.1 301 Moved Permanently";
+        } else {
+            status_line = "HTTP/1.1 302 Found";
+        }
+        let response = format!(
+            "{}\nLocation: {}\n{}\nContent-Length: {}\r\n\r\n",
+            status_line,
+            host_config.redirect_to,
+            SERVER_LINE,
+            0,
+        );
+        return (response, Vec::new());
+    }
+
     let document_root = host_config.root.to_owned();
     let resources_root = host_config.resources.to_owned();
 

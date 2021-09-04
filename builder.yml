@@ -13,6 +13,7 @@ stages:
       source $HOME/.cargo/env
       cargo build --release
       cp target/release/main /out/
+      ./deployment/generate_index.sh $BUILDER_RUN $MAJOR_VERSION$BUILDER_RUN
       docker build . -t menial_2 --no-cache
       docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:latest
       docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:$BUILDER_RUN

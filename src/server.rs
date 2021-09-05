@@ -121,7 +121,7 @@ fn handle_ssl_connection(mut stream: SslStream<TcpStream>) {
 
 const SERVER_LINE: &str = "Server: menial/2";
 
-fn handle_request(buffer: [u8; 1024], default_host: &str) -> (String, Vec<u8>) {
+fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     let request_content = String::from_utf8_lossy(&buffer);
     log!("debug", request_content);
     let mut document = String::from("");
@@ -140,7 +140,7 @@ fn handle_request(buffer: [u8; 1024], default_host: &str) -> (String, Vec<u8>) {
     }
 
     if host.find(":").unwrap_or(0) == 0 {
-        host = format!("{}:{}", host, default_host)
+        host = format!("{}:{}", host, default_port)
 
     }
 

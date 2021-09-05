@@ -180,7 +180,7 @@ pub fn _get_config() -> Config {
     } else {
         let host = matches.value_of("host").unwrap_or("127.0.0.1").to_owned();
         let port = matches.value_of("port").unwrap_or("8080").to_owned();
-        let root = String::from(matches.value_of("root").unwrap_or("default")).to_owned();
+        let root = String::from(matches.value_of("root").unwrap_or("default/welcomepage")).to_owned();
         let loglevel = matches.value_of("loglevel").unwrap_or("info").to_owned();
         let key = String::from(matches.value_of("key").unwrap_or("")).to_owned();
         let cert = String::from(matches.value_of("cert").unwrap_or("")).to_owned();

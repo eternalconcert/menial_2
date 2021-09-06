@@ -2,7 +2,7 @@ use crate::{log, LOG_LEVEL, ThreadPool};
 use crate::config::{CONFIG, HostConfig};
 
 use ansi_term::Colour;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, NaiveDateTime};
 use openssl::ssl::{SslStream, SslMethod, SslAcceptor, SslFiletype};
 use std::collections::{HashSet};
 use std::fs;
@@ -11,11 +11,11 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 use std::path::Path;
 use std::sync::Arc;
+use sha2::{Sha256, Digest};
 
 pub fn get_ports() -> HashSet<String> {
     let mut ports = HashSet::new();
     for (host, value) in CONFIG.host_configs.iter() {
-
         ports.insert(value.port.to_owned());
         log!("info", format!("{}: Document root: {}", host, value.root));
         log!("info", format!("{}: Resources root: {}", host, value.resources));
@@ -26,7 +26,6 @@ pub fn get_ports() -> HashSet<String> {
 pub fn get_ssl_ports() -> HashSet<String> {
     let mut ssl_port = HashSet::new();
     for (port, _) in CONFIG.ssl_config.iter() {
-
         ssl_port.insert(port.to_owned());
     }
     return ssl_port;
@@ -223,13 +222,41 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
         _ => {}
     }
 
-    let contents = fs::read(filename).unwrap();
+
+    match NaiveDateTime::parse_from_str("Wed, 21 Oct 2015 07:28:00 GMT", "%a, %d %b %Y %H:%M:%S GMT") {
+        Ok(value) => {
+            // Compare value with file and return or proceed
+        },
+        Err(_) => {}
+    }
+
+
+    let contents = fs::read(&filename).unwrap();
+
+    let (content_length, etag, modified) = get_response_headers(&contents, &filename);
 
     let response = format!(
-        "{}\n{}\nContent-Length: {}\r\n\r\n",
+        "{}\n{}\n{}\n{}\n{}\n\r\n\r\n",
         status_line,
         SERVER_LINE,
-        contents.len(),
+        content_length,
+        etag,
+        modified,
     );
     return (response, contents);
+}
+
+
+fn get_response_headers(contents: &std::vec::Vec<u8>, filename: &str) -> (String, String, String) {
+    let content_length = format!("Content-Length: {}", contents.len());
+
+    let hash = format!("{:x}", Sha256::digest(&contents));
+    let etag = format!("ETag: \"{}\"", hash);
+    log!("debug", format!("File hash: {}", hash));
+
+
+    let modified: DateTime<Utc> = fs::metadata(&filename).unwrap().modified().unwrap().into();
+    let modified_formatted = format!("Last-Modified: {}", modified.format("%a, %d %b %Y %H:%M:%S GMT").to_string());
+
+    return (content_length, etag, modified_formatted);
 }

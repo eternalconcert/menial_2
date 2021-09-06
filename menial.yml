@@ -1,7 +1,7 @@
 loglevel: info
 hosts:
   localhost:8080:
-    root: default
+    root: default/welcomepage
     resources: default/pages
   test.localhost:8080:
     root: /tmp/

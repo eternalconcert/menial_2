@@ -120,6 +120,7 @@ fn handle_ssl_connection(mut stream: SslStream<TcpStream>) {
 
 const SERVER_LINE: &str = "Server: menial/2";
 
+
 fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     let request_content = String::from_utf8_lossy(&buffer);
     log!("debug", request_content);
@@ -235,15 +236,16 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
 
     let (content_length, etag, modified) = get_response_headers(&contents, &filename);
 
-    let response = format!(
-        "{}\n{}\n{}\n{}\n{}\n\r\n\r\n",
+    let headers = format!(
+        "{}\n{}\n{}\n{}\n{}\r\n\r\n",
         status_line,
         SERVER_LINE,
         content_length,
         etag,
         modified,
     );
-    return (response, contents);
+
+    return (headers, contents);
 }
 
 

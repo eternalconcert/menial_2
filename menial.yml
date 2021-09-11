@@ -1,11 +1,13 @@
 loglevel: info
 hosts:
-  localhost:8080:
+  localhost:9999:
     root: default/welcomepage
     resources: default/pages
-  test.localhost:8080:
+  test.localhost:9999:
     root: /tmp/
     resources: default/pages
+    redirect_to: https://eternalconcert.de
+    redirect_permanent: false
 ssl:
   4433:
     key: key.pem

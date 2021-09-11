@@ -1,13 +1,12 @@
 extern crate clap;
-extern crate yaml_rust;
 extern crate num_cpus;
+extern crate yaml_rust;
 
 use ansi_term::Colour;
 use chrono::{DateTime, Utc};
-use menial_2::{log, ThreadPool, LOG_LEVEL};
-use menial_2::config::{CONFIG};
+use menial_2::config::CONFIG;
 use menial_2::server::{get_ports, get_ssl_ports, run_server, run_ssl_server};
-
+use menial_2::{log, ThreadPool, LOG_LEVEL};
 
 fn main() {
     let menial_version: &'static str = option_env!("MENIAL_VERSION").unwrap_or("DEV");
@@ -33,6 +32,5 @@ fn main() {
                 run_server(port.parse::<usize>().unwrap());
             });
         }
-
     }
 }

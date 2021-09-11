@@ -1,10 +1,10 @@
+use crate::config::CONFIG;
 use chrono::{DateTime, Utc};
-use crate::config::{CONFIG};
 
 use ansi_term::Colour;
 use lazy_static::lazy_static;
-use std::sync::Arc;
 use std::sync::mpsc;
+use std::sync::Arc;
 use std::sync::Mutex;
 use std::thread;
 

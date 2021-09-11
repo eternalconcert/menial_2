@@ -1,24 +1,27 @@
-use crate::{log, LOG_LEVEL, ThreadPool};
-use crate::config::{CONFIG, HostConfig};
+use crate::config::{HostConfig, CONFIG};
+use crate::{log, ThreadPool, LOG_LEVEL};
 
 use ansi_term::Colour;
-use chrono::{DateTime, Utc, NaiveDateTime};
-use openssl::ssl::{SslStream, SslMethod, SslAcceptor, SslFiletype};
-use std::collections::{HashSet};
+use chrono::{DateTime, NaiveDateTime, Utc};
+use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod, SslStream};
+use sha2::{Digest, Sha256};
+use std::collections::HashSet;
 use std::fs;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::path::Path;
 use std::sync::Arc;
-use sha2::{Sha256, Digest};
 
 pub fn get_ports() -> HashSet<String> {
     let mut ports = HashSet::new();
     for (host, value) in CONFIG.host_configs.iter() {
         ports.insert(value.port.to_owned());
         log!("info", format!("{}: Document root: {}", host, value.root));
-        log!("info", format!("{}: Resources root: {}", host, value.resources));
+        log!(
+            "info",
+            format!("{}: Resources root: {}", host, value.resources)
+        );
     }
     return ports;
 }
@@ -35,7 +38,9 @@ pub fn run_ssl_server(port: usize) {
     let mut acceptor = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
     let key = &CONFIG.ssl_config[&port.to_string()].key;
     let cert = &CONFIG.ssl_config[&port.to_string()].cert;
-    acceptor.set_private_key_file(key, SslFiletype::PEM).unwrap();
+    acceptor
+        .set_private_key_file(key, SslFiletype::PEM)
+        .unwrap();
     acceptor.set_certificate_chain_file(cert).unwrap();
     acceptor.check_private_key().unwrap();
 
@@ -49,14 +54,12 @@ pub fn run_ssl_server(port: usize) {
         let stream = stream.unwrap();
         let acceptor = acceptor.clone();
 
-        pool.execute(move || {
-            match acceptor.accept(stream) {
-                Ok(stream) => {
-                    handle_ssl_connection(stream);
-                }
-                Err(_) => {
-                    log!("debug", "Not an HTTPS request");
-                }
+        pool.execute(move || match acceptor.accept(stream) {
+            Ok(stream) => {
+                handle_ssl_connection(stream);
+            }
+            Err(_) => {
+                log!("debug", "Not an HTTPS request");
             }
         });
     }
@@ -75,27 +78,25 @@ pub fn run_server(port: usize) {
     }
 }
 
-
 fn handle_connection(mut stream: TcpStream) {
     let mut buffer = [0; 1024];
     stream.read(&mut buffer).unwrap();
 
-    let (response, contents) = handle_request(buffer, "80");
+    let (headers, contents) = handle_request(buffer, "80");
 
-    stream.write(response.as_bytes()).unwrap();
+    stream.write(headers.as_bytes()).unwrap();
     match stream.write_all(&contents) {
         Ok(_) => {
             log!("debug", "Write content successfull");
-        },
+        }
         Err(ref _e) => {
             log!("warning", "Could not write buffer!");
             // panic!("could not write buffer!")
-        },
+        }
     };
 
     stream.flush().unwrap();
 }
-
 
 fn handle_ssl_connection(mut stream: SslStream<TcpStream>) {
     let mut buffer = [0; 1024];
@@ -107,25 +108,24 @@ fn handle_ssl_connection(mut stream: SslStream<TcpStream>) {
     match stream.write_all(&contents) {
         Ok(_) => {
             log!("debug", "Write content successfull");
-        },
+        }
         Err(ref _e) => {
             log!("warning", "Could not write buffer!");
             // panic!("could not write buffer!")
-        },
+        }
     };
 
     stream.flush().unwrap();
 }
 
-
 const SERVER_LINE: &str = "Server: menial/2";
-
 
 fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     let request_content = String::from_utf8_lossy(&buffer);
     log!("debug", request_content);
     let mut document = String::from("");
     let mut host = String::from("");
+    let mut modified_since = String::from("");
 
     for line in request_content.split("\n") {
         if line.starts_with("GET") || line.starts_with("POST") {
@@ -133,15 +133,15 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
                 Some(v) => document = String::from(&line[4..v - 1]),
                 None => {}
             }
-        }
-        else if line.starts_with("Host:") {
+        } else if line.starts_with("If-Modified-Since:") {
+            modified_since = String::from(&line[19..line.len() - 1]);
+        } else if line.starts_with("Host:") {
             host = String::from(&line[6..line.len() - 1]);
         }
     }
 
     if host.find(":").unwrap_or(0) == 0 {
         host = format!("{}:{}", host, default_port)
-
     }
 
     log!("debug", format!("Requested host: {}", host));
@@ -152,9 +152,8 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
         Some(conf) => host_config = conf,
         _ => {
             log!("debug", "Host not found");
-        },
+        }
     }
-
 
     if host_config.redirect_to != "" {
         let status_line;
@@ -163,14 +162,11 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
         } else {
             status_line = "HTTP/1.1 302 Found";
         }
-        let response = format!(
+        let headers = format!(
             "{}\nLocation: {}\n{}\nContent-Length: {}\r\n\r\n",
-            status_line,
-            host_config.redirect_to,
-            SERVER_LINE,
-            0,
+            status_line, host_config.redirect_to, SERVER_LINE, 0,
         );
-        return (response, Vec::new());
+        return (headers, Vec::new());
     }
 
     let document_root = host_config.root.to_owned();
@@ -223,31 +219,37 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
         _ => {}
     }
 
-
-    match NaiveDateTime::parse_from_str("Wed, 21 Oct 2015 07:28:00 GMT", "%a, %d %b %Y %H:%M:%S GMT") {
-        Ok(value) => {
-            // Compare value with file and return or proceed
-        },
-        Err(_) => {}
-    }
-
-
     let contents = fs::read(&filename).unwrap();
+
+    let modified: DateTime<Utc> = fs::metadata(&filename).unwrap().modified().unwrap().into();
+    let modified_short = NaiveDateTime::parse_from_str(
+        &modified.format("%a, %d %b %Y %H:%M:%S GMT").to_string(),
+        "%a, %d %b %Y %H:%M:%S GMT",
+    )
+    .unwrap();
+
+    if !modified_since.is_empty() {
+        match NaiveDateTime::parse_from_str(&modified_since, "%a, %d %b %Y %H:%M:%S GMT") {
+            Ok(value) => {
+                if value >= modified_short {
+                    let headers =
+                        format!("{}\n{}\r\n\r\n", "HTTP/1.1 304 Not Modified", SERVER_LINE);
+                    return (headers, Vec::new());
+                }
+            }
+            Err(_) => {}
+        }
+    }
 
     let (content_length, etag, modified) = get_response_headers(&contents, &filename);
 
     let headers = format!(
         "{}\n{}\n{}\n{}\n{}\r\n\r\n",
-        status_line,
-        SERVER_LINE,
-        content_length,
-        etag,
-        modified,
+        status_line, SERVER_LINE, content_length, etag, modified,
     );
 
     return (headers, contents);
 }
-
 
 fn get_response_headers(contents: &std::vec::Vec<u8>, filename: &str) -> (String, String, String) {
     let content_length = format!("Content-Length: {}", contents.len());
@@ -256,9 +258,11 @@ fn get_response_headers(contents: &std::vec::Vec<u8>, filename: &str) -> (String
     let etag = format!("ETag: \"{}\"", hash);
     log!("debug", format!("File hash: {}", hash));
 
-
     let modified: DateTime<Utc> = fs::metadata(&filename).unwrap().modified().unwrap().into();
-    let modified_formatted = format!("Last-Modified: {}", modified.format("%a, %d %b %Y %H:%M:%S GMT").to_string());
+    let modified_formatted = format!(
+        "Last-Modified: {}",
+        modified.format("%a, %d %b %Y %H:%M:%S GMT").to_string()
+    );
 
     return (content_length, etag, modified_formatted);
 }

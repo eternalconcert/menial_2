@@ -2,8 +2,6 @@ use crate::config::CONFIG;
 use std::collections::HashSet;
 use chrono::{DateTime, Utc};
 use ansi_term::Colour;
-use sha2::{Digest, Sha256};
-use std::fs;
 
 use crate::{log, LOG_LEVEL};
 
@@ -19,14 +17,13 @@ pub fn get_base_headers() -> String {
     return format!("{}\n{}", SERVER_LINE, date);
 }
 
-pub fn get_response_headers(contents: &std::vec::Vec<u8>, filename: &str) -> (String, String, String) {
+pub fn get_response_headers(contents: &std::vec::Vec<u8>, modified: DateTime<Utc>, hash: String) -> (String, String, String) {
     let content_length = format!("Content-Length: {}", contents.len());
 
-    let hash = format!("{:x}", Sha256::digest(&contents));
+
     let etag = format!("ETag: \"{}\"", hash);
     log!("debug", format!("File hash: {}", hash));
 
-    let modified: DateTime<Utc> = fs::metadata(&filename).unwrap().modified().unwrap().into();
     let modified_formatted = format!(
         "Last-Modified: {}",
         modified.format("%a, %d %b %Y %H:%M:%S GMT").to_string()

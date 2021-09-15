@@ -11,6 +11,7 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 use std::path::Path;
 use std::sync::Arc;
+use sha2::{Digest, Sha256};
 
 
 pub fn run_ssl_server(port: usize) {
@@ -204,14 +205,16 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
 
     let contents = fs::read(&filename).unwrap();
 
-    let modified: DateTime<Utc> = fs::metadata(&filename).unwrap().modified().unwrap().into();
+    let file_modified: DateTime<Utc> = fs::metadata(&filename).unwrap().modified().unwrap().into();
     let modified_short = NaiveDateTime::parse_from_str(
-        &modified.format("%a, %d %b %Y %H:%M:%S GMT").to_string(),
+        &file_modified.format("%a, %d %b %Y %H:%M:%S GMT").to_string(),
         "%a, %d %b %Y %H:%M:%S GMT",
     )
     .unwrap();
 
-    let (content_length, etag, modified) = get_response_headers(&contents, &filename);
+    let hash = format!("{:x}", Sha256::digest(&contents));
+
+    let (content_length, etag, modified) = get_response_headers(&contents, file_modified, hash);
 
     let headers = format!(
         "{}\n{}\n{}\n{}\n{}\r\n\r\n",

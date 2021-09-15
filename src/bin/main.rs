@@ -2,10 +2,11 @@ extern crate clap;
 extern crate num_cpus;
 extern crate yaml_rust;
 
+use menial_2::utils::{get_ports, get_ssl_ports};
 use ansi_term::Colour;
 use chrono::{DateTime, Utc};
 use menial_2::config::CONFIG;
-use menial_2::server::{get_ports, get_ssl_ports, run_server, run_ssl_server};
+use menial_2::server::{run_server, run_ssl_server};
 use menial_2::{log, ThreadPool, LOG_LEVEL};
 
 fn main() {

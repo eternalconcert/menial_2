@@ -1,11 +1,10 @@
+use crate::utils::{get_base_headers, get_response_headers};
 use crate::config::{HostConfig, CONFIG};
 use crate::{log, ThreadPool, LOG_LEVEL};
 
 use ansi_term::Colour;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod, SslStream};
-use sha2::{Digest, Sha256};
-use std::collections::HashSet;
 use std::fs;
 use std::io::prelude::*;
 use std::net::TcpListener;
@@ -13,26 +12,6 @@ use std::net::TcpStream;
 use std::path::Path;
 use std::sync::Arc;
 
-pub fn get_ports() -> HashSet<String> {
-    let mut ports = HashSet::new();
-    for (host, value) in CONFIG.host_configs.iter() {
-        ports.insert(value.port.to_owned());
-        log!("info", format!("{}: Document root: {}", host, value.root));
-        log!(
-            "info",
-            format!("{}: Resources root: {}", host, value.resources)
-        );
-    }
-    return ports;
-}
-
-pub fn get_ssl_ports() -> HashSet<String> {
-    let mut ssl_port = HashSet::new();
-    for (port, _) in CONFIG.ssl_config.iter() {
-        ssl_port.insert(port.to_owned());
-    }
-    return ssl_port;
-}
 
 pub fn run_ssl_server(port: usize) {
     let mut acceptor = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
@@ -118,15 +97,13 @@ fn handle_ssl_connection(mut stream: SslStream<TcpStream>) {
     stream.flush().unwrap();
 }
 
-const SERVER_LINE: &str = "Server: menial/2";
-
 fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     let request_content = String::from_utf8_lossy(&buffer);
     log!("debug", request_content);
     let mut document = String::from("");
     let mut host = String::from("");
     let mut modified_since = String::from("");
-
+    // let mut none_match = String::from("");
     for line in request_content.split("\n") {
         if line.starts_with("GET") || line.starts_with("POST") {
             match line.find("HTTP") {
@@ -135,10 +112,14 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
             }
         } else if line.starts_with("If-Modified-Since:") {
             modified_since = String::from(&line[19..line.len() - 1]);
+        // } else if line.starts_with("If-None-Match:") {
+        //     none_match = String::from(&line[14..line.len() - 1]);
         } else if line.starts_with("Host:") {
             host = String::from(&line[6..line.len() - 1]);
         }
     }
+
+    // log!("warning", none_match);
 
     if host.find(":").unwrap_or(0) == 0 {
         host = format!("{}:{}", host, default_port)
@@ -155,6 +136,8 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
         }
     }
 
+    let base_headers = get_base_headers();
+
     if host_config.redirect_to != "" {
         let status_line;
         if host_config.redirect_permanent {
@@ -163,8 +146,8 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
             status_line = "HTTP/1.1 302 Found";
         }
         let headers = format!(
-            "{}\nLocation: {}\n{}\nContent-Length: {}\r\n\r\n",
-            status_line, host_config.redirect_to, SERVER_LINE, 0,
+            "{}\nLocation: {}\n{}\r\n\r\n",
+            status_line, host_config.redirect_to, base_headers,
         );
         return (headers, Vec::new());
     }
@@ -228,48 +211,26 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     )
     .unwrap();
 
-
-    let (date, content_length, etag, modified) = get_response_headers(&contents, &filename);
+    let (content_length, etag, modified) = get_response_headers(&contents, &filename);
 
     let headers = format!(
-        "{}\n{}\n{}\n{}\n{}\n{}\r\n\r\n",
-        status_line, SERVER_LINE, date, content_length, etag, modified,
+        "{}\n{}\n{}\n{}\n{}\r\n\r\n",
+        status_line, base_headers, content_length, etag, modified,
     );
 
     if !modified_since.is_empty() {
         match NaiveDateTime::parse_from_str(&modified_since, "%a, %d %b %Y %H:%M:%S GMT") {
             Ok(value) => {
                 if value >= modified_short {
-                    let headers =
-                        format!("{}\n{}\n{}\n{}\n{}\r\n\r\n", "HTTP/1.1 304 Not Modified", SERVER_LINE, date, modified, etag);
+                    let headers = format!(
+                        "{}\n{}\n{}\n{}\r\n\r\n",
+                        "HTTP/1.1 304 Not Modified", base_headers, modified, etag
+                    );
                     return (headers, Vec::new());
                 }
             }
             Err(_) => {}
         }
     }
-
     return (headers, contents);
-}
-
-fn get_response_headers(contents: &std::vec::Vec<u8>, filename: &str) -> (String, String, String, String) {
-    let content_length = format!("Content-Length: {}", contents.len());
-
-    let hash = format!("{:x}", Sha256::digest(&contents));
-    let etag = format!("ETag: \"{}\"", hash);
-    log!("debug", format!("File hash: {}", hash));
-
-    let modified: DateTime<Utc> = fs::metadata(&filename).unwrap().modified().unwrap().into();
-    let modified_formatted = format!(
-        "Last-Modified: {}",
-        modified.format("%a, %d %b %Y %H:%M:%S GMT").to_string()
-    );
-
-    let now: DateTime<Utc> = Utc::now();
-    let date = format!(
-        "Date: {}",
-        now.format("%a, %d %b %Y %H:%M:%S GMT").to_string()
-    );
-    
-    return (date, content_length, etag, modified_formatted);
 }

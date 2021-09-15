@@ -11,6 +11,7 @@ use std::thread;
 pub mod config;
 pub mod logger;
 pub mod server;
+pub mod utils;
 
 lazy_static! {
     pub static ref LOG_LEVEL: String = CONFIG.loglevel.to_owned();

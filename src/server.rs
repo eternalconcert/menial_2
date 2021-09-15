@@ -228,18 +228,6 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     )
     .unwrap();
 
-    if !modified_since.is_empty() {
-        match NaiveDateTime::parse_from_str(&modified_since, "%a, %d %b %Y %H:%M:%S GMT") {
-            Ok(value) => {
-                if value >= modified_short {
-                    let headers =
-                        format!("{}\n{}\r\n\r\n", "HTTP/1.1 304 Not Modified", SERVER_LINE);
-                    return (headers, Vec::new());
-                }
-            }
-            Err(_) => {}
-        }
-    }
 
     let (date, content_length, etag, modified) = get_response_headers(&contents, &filename);
 
@@ -247,6 +235,20 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
         "{}\n{}\n{}\n{}\n{}\n{}\r\n\r\n",
         status_line, SERVER_LINE, date, content_length, etag, modified,
     );
+
+    if !modified_since.is_empty() {
+        match NaiveDateTime::parse_from_str(&modified_since, "%a, %d %b %Y %H:%M:%S GMT") {
+            Ok(value) => {
+                if value >= modified_short {
+                    let headers =
+                        format!("{}\n{}\n{}\n{}\n{}\r\n\r\n", "HTTP/1.1 304 Not Modified", SERVER_LINE, date, modified, etag);
+                    return (headers, Vec::new());
+                }
+            }
+            Err(_) => {}
+        }
+    }
+
     return (headers, contents);
 }
 

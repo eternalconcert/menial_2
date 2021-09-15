@@ -241,17 +241,16 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
         }
     }
 
-    let (content_length, etag, modified) = get_response_headers(&contents, &filename);
+    let (date, content_length, etag, modified) = get_response_headers(&contents, &filename);
 
     let headers = format!(
-        "{}\n{}\n{}\n{}\n{}\r\n\r\n",
-        status_line, SERVER_LINE, content_length, etag, modified,
+        "{}\n{}\n{}\n{}\n{}\n{}\r\n\r\n",
+        status_line, SERVER_LINE, date, content_length, etag, modified,
     );
-
     return (headers, contents);
 }
 
-fn get_response_headers(contents: &std::vec::Vec<u8>, filename: &str) -> (String, String, String) {
+fn get_response_headers(contents: &std::vec::Vec<u8>, filename: &str) -> (String, String, String, String) {
     let content_length = format!("Content-Length: {}", contents.len());
 
     let hash = format!("{:x}", Sha256::digest(&contents));
@@ -264,5 +263,11 @@ fn get_response_headers(contents: &std::vec::Vec<u8>, filename: &str) -> (String
         modified.format("%a, %d %b %Y %H:%M:%S GMT").to_string()
     );
 
-    return (content_length, etag, modified_formatted);
+    let now: DateTime<Utc> = Utc::now();
+    let date = format!(
+        "Date: {}",
+        now.format("%a, %d %b %Y %H:%M:%S GMT").to_string()
+    );
+    
+    return (date, content_length, etag, modified_formatted);
 }

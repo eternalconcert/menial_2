@@ -1,4 +1,4 @@
-use crate::utils::{get_base_headers, get_response_headers};
+use crate::utils::{get_base_headers, get_response_headers, make304};
 use crate::config::{HostConfig, CONFIG};
 use crate::{log, ThreadPool, LOG_LEVEL};
 
@@ -104,7 +104,7 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     let mut document = String::from("");
     let mut host = String::from("");
     let mut modified_since = String::from("");
-    // let mut none_match = String::from("");
+    let mut none_match = String::from("");
     for line in request_content.split("\n") {
         if line.starts_with("GET") || line.starts_with("POST") {
             match line.find("HTTP") {
@@ -113,14 +113,12 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
             }
         } else if line.starts_with("If-Modified-Since:") {
             modified_since = String::from(&line[19..line.len() - 1]);
-        // } else if line.starts_with("If-None-Match:") {
-        //     none_match = String::from(&line[14..line.len() - 1]);
+        } else if line.starts_with("If-None-Match:") {
+            none_match = String::from(&line[15..line.len() - 1]);
         } else if line.starts_with("Host:") {
             host = String::from(&line[6..line.len() - 1]);
         }
     }
-
-    // log!("warning", none_match);
 
     if host.find(":").unwrap_or(0) == 0 {
         host = format!("{}:{}", host, default_port)
@@ -214,26 +212,28 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
 
     let hash = format!("{:x}", Sha256::digest(&contents));
 
-    let (content_length, etag, modified) = get_response_headers(&contents, file_modified, hash);
+    let (content_length, etag, modified) = get_response_headers(&contents, file_modified, &hash);
+
+    if !none_match.is_empty() && none_match == format!("\"{}\"", hash) {
+        return (make304(modified, etag), Vec::new());
+    }
+
+    if !modified_since.is_empty() {
+        match NaiveDateTime::parse_from_str(&modified_since, "%a, %d %b %Y %H:%M:%S GMT") {
+            Ok(value) => {
+                if value >= modified_short {
+                    return (make304(modified, etag), Vec::new());
+                }
+            }
+            Err(_) => {}
+        }
+    }
 
     let headers = format!(
         "{}\n{}\n{}\n{}\n{}\r\n\r\n",
         status_line, base_headers, content_length, etag, modified,
     );
 
-    if !modified_since.is_empty() {
-        match NaiveDateTime::parse_from_str(&modified_since, "%a, %d %b %Y %H:%M:%S GMT") {
-            Ok(value) => {
-                if value >= modified_short {
-                    let headers = format!(
-                        "{}\n{}\n{}\n{}\r\n\r\n",
-                        "HTTP/1.1 304 Not Modified", base_headers, modified, etag
-                    );
-                    return (headers, Vec::new());
-                }
-            }
-            Err(_) => {}
-        }
-    }
     return (headers, contents);
 }
+

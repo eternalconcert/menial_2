@@ -17,9 +17,8 @@ pub fn get_base_headers() -> String {
     return format!("{}\n{}", SERVER_LINE, date);
 }
 
-pub fn get_response_headers(contents: &std::vec::Vec<u8>, modified: DateTime<Utc>, hash: String) -> (String, String, String) {
+pub fn get_response_headers(contents: &std::vec::Vec<u8>, modified: DateTime<Utc>, hash: &String) -> (String, String, String) {
     let content_length = format!("Content-Length: {}", contents.len());
-
 
     let etag = format!("ETag: \"{}\"", hash);
     log!("debug", format!("File hash: {}", hash));
@@ -51,4 +50,11 @@ pub fn get_ssl_ports() -> HashSet<String> {
         ssl_port.insert(port.to_owned());
     }
     return ssl_port;
+}
+
+pub fn make304(modified: String, etag: String) -> String {
+    return format!(
+        "{}\n{}\n{}\n{}\r\n\r\n",
+        "HTTP/1.1 304 Not Modified", get_base_headers(), modified, etag
+    );
 }

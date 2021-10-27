@@ -1,4 +1,4 @@
-use crate::utils::{get_base_headers, get_response_headers, make304};
+use crate::utils::{get_base_headers, get_response_headers, make304, intrusion_try_detected};
 use crate::config::{HostConfig, CONFIG};
 use crate::{log, ThreadPool, LOG_LEVEL};
 
@@ -156,16 +156,14 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
 
     let mut status: u16 = 0;
 
-    match request_content.find("..") {
-        Some(_) => {
-            log!(
-                "warning",
-                format!("Intrusion try detected: {}", request_content)
-            );
-            status = 400;
-        }
-        None => {}
-    }
+
+    if intrusion_try_detected(request_content.to_string()) {
+        log!(
+            "warning",
+            format!("Intrusion try detected: {}", request_content)
+        );
+        status = 400;
+   }
 
     if document == "/" {
         document = String::from("/index.html");
@@ -178,12 +176,14 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
 
     let mut status_line: String = String::from("");
     let mut filename: String = String::from("");
-    if Path::new(&doc).exists() && request_content.starts_with("GET") {
-        status = 200;
-    } else if status == 0 {
-        log!("warning", format!("Requested document not found: {}", doc));
-        status = 404;
-    };
+    if status == 0 {
+        if Path::new(&doc).exists() && request_content.starts_with("GET") {
+            status = 200;
+        } else {
+            log!("warning", format!("Requested document not found: {}", doc));
+            status = 404;
+        };
+    }
 
     match status {
         200 => {
@@ -236,4 +236,3 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
 
     return (headers, contents);
 }
-

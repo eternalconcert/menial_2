@@ -58,3 +58,9 @@ pub fn make304(modified: String, etag: String) -> String {
         "HTTP/1.1 304 Not Modified", get_base_headers(), modified, etag
     );
 }
+
+pub fn intrusion_try_detected(request_content: String) -> bool {
+    let double_dots: Vec<_> = request_content.match_indices("..").collect();
+    let double_slashes: Vec<_> = request_content.match_indices("//").collect();
+    return (double_slashes.len() > 1) || (double_dots.len() > 0);
+}

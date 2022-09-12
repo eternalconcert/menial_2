@@ -12,7 +12,7 @@ stages:
       sh rustup.sh -y
       source $HOME/.cargo/env
       echo "-----"
-      ls -lah
+      ls -lah /workbench
       echo "-----"
       cargo build --release
       cp target/release/main /out/

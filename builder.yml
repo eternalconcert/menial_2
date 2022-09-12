@@ -3,6 +3,9 @@ image: cloud.canister.io:5000/eternalconcert/builder-default
 stages:
   - name: build
     run: |
+      echo "-----"
+      ls -lah /workbench
+      echo "-----"
       docker login cloud.canister.io:5000 --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
       export MENIAL_VERSION=$MAJOR_VERSION$BUILDER_RUN
       export DEBIAN_FRONTEND=noninteractive
@@ -11,9 +14,6 @@ stages:
       wget https://sh.rustup.rs -O rustup.sh
       sh rustup.sh -y
       source $HOME/.cargo/env
-      echo "-----"
-      ls -lah /workbench
-      echo "-----"
       cargo build --release
       cp target/release/main /out/
       ./deployment/generate_index.sh $BUILDER_RUN $MAJOR_VERSION$BUILDER_RUN

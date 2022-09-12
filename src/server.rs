@@ -154,8 +154,13 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     let document_root = host_config.root.to_owned();
     let resources_root = host_config.resources.to_owned();
 
-    let mut status: u16 = 0;
 
+    let paths = fs::read_dir(document_root.to_owned()).unwrap();
+    for path in paths {
+        println!("{}", path.unwrap().path().display());
+    }
+
+    let mut status: u16 = 0;
 
     if intrusion_try_detected(request_content.to_string()) {
         log!(
@@ -212,7 +217,7 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
 
     let hash = format!("{:x}", Sha256::digest(&contents));
 
-    let (content_length, etag, modified) = get_response_headers(&contents, file_modified, &hash);
+    let (content_length, etag, modified, content_type) = get_response_headers(&contents, file_modified, &hash, &filename);
 
     if !none_match.is_empty() && none_match == format!("\"{}\"", hash) {
         return (make304(modified, etag), Vec::new());
@@ -230,8 +235,8 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     }
 
     let headers = format!(
-        "{}\n{}\n{}\n{}\n{}\r\n\r\n",
-        status_line, base_headers, content_length, etag, modified,
+        "{}\n{}\n{}\n{}\n{}\n{}\r\n\r\n",
+        status_line, base_headers, content_length, etag, modified, content_type,
     );
 
     return (headers, contents);

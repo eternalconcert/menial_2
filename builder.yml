@@ -6,6 +6,7 @@ stages:
       docker login cloud.canister.io:5000 --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
       export MENIAL_VERSION=$MAJOR_VERSION$BUILDER_RUN
       export DEBIAN_FRONTEND=noninteractive
+      ls -lah
       apt-get update
       apt-get install wget build-essential libssl-dev pkg-config -y
       wget https://sh.rustup.rs -O rustup.sh

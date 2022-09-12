@@ -17,7 +17,40 @@ pub fn get_base_headers() -> String {
     return format!("{}\n{}", SERVER_LINE, date);
 }
 
-pub fn get_response_headers(contents: &std::vec::Vec<u8>, modified: DateTime<Utc>, hash: &String) -> (String, String, String) {
+
+fn get_file_name_extension(filename: &String) -> String {
+    return filename.split('.').last().unwrap_or("").to_string();
+}
+
+
+fn get_content_type(filename_extension: String) -> String {
+    let res;
+
+    match filename_extension.as_str() {
+        "html" => res = "text/html",
+        "htm" => res = "text/html",
+        "css" => res = "text/css",
+        "gif" => res = "image/gif",
+        "mp3" => res = "audio/mpeg",
+        "mp4" => res = "audio/mp4",
+        "jpg" => res = "image/jpeg",
+        "jpeg" => res = "image/jpeg",
+        "json" => res = "application/json",
+        "pdf" => res = "application/pdf",
+        "png" => res = "image/png",
+        "ttf" => res = "font/ttf",
+        "txt" => res = "text/txt",
+        "woff" => res = "font/woff",
+        "woff2" => res = "font/woff2",
+        "zip" => res = "application/zip",
+        _ => res = "text/plain"
+    };
+
+    return res.to_string();
+}
+
+
+pub fn get_response_headers(contents: &std::vec::Vec<u8>, modified: DateTime<Utc>, hash: &String, filename: &String) -> (String, String, String, String) {
     let content_length = format!("Content-Length: {}", contents.len());
 
     let etag = format!("ETag: \"{}\"", hash);
@@ -28,7 +61,12 @@ pub fn get_response_headers(contents: &std::vec::Vec<u8>, modified: DateTime<Utc
         modified.format("%a, %d %b %Y %H:%M:%S GMT").to_string()
     );
 
-    return (content_length, etag, modified_formatted);
+    let extension = get_file_name_extension(filename);
+
+
+    let content_type = format!("Content-Type: {}", get_content_type(extension));
+
+    return (content_length, etag, modified_formatted, content_type);
 }
 
 pub fn get_ports() -> HashSet<String> {

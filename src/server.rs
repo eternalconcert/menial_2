@@ -154,12 +154,6 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     let document_root = host_config.root.to_owned();
     let resources_root = host_config.resources.to_owned();
 
-
-    let paths = fs::read_dir(document_root.to_owned()).unwrap();
-    for path in paths {
-        println!("{}", path.unwrap().path().display());
-    }
-
     let mut status: u16 = 0;
 
     if intrusion_try_detected(request_content.to_string()) {

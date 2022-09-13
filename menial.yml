@@ -1,13 +1,8 @@
 loglevel: info
 hosts:
-  localhost:9999:
-    root: default/welcomepage
+  localhost:80:
+    root: /usr/share/menial/html/
     resources: default/pages
-  test.localhost:9999:
-    root: /tmp/
-    resources: default/pages
-    redirect_to: https://eternalconcert.de
-    redirect_permanent: false
 ssl:
   4433:
     key: key.pem

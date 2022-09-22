@@ -1,0 +1,237 @@
+{% extends '_base.jinja' %}
+{% block body %}
+    <h2>Help</h2>
+    <h3>Content</h3>
+    <ul id="content-table">
+        <li class="content-table-main">
+            <a href="#config">Configuration</a>
+        </li>
+        <li class="content-table-sub">
+            <a href="#config-basic">Basic</a>
+        </li>
+        <li class="content-table-sub">
+            <a href="#config-directives">Directives</a>
+        </li>
+        <li class="content-table-sub">
+            <a href="#config-custom-config">Custom config</a>
+        </li>
+    </ul>
+
+    <h2 id="config">Configuration</h2>
+    <h3 id="config-basic">Basic</h3>
+    <p>
+        You can find the default config file in the root folder of your menial installation. It contains all configuration directives you need to customize menial.
+    </p>
+    <p>
+        The content is JSON formated and has the following structure:
+    </p>
+    <p>
+        <pre class="prettyprint lang-json">
+{
+    "hosts": {
+        "*:80": {
+            "handler": "file",
+            "root": "default/",
+            "staticdir": "default/static/",
+            "defaultdocument": "index.html",
+            "additionalheaders": "Access-Control-Allow-Origin: *\n"
+        },
+        "*:8080": {
+            "handler": "redirect",
+            "root": "",
+            "permanent": true,
+            "target": "http://localhost/",
+            "keeptarget": true
+        },
+        "*:8080": {
+            "handler": "file",
+            "root": "/restricted/",
+            "authfile": "auth.db",
+            "dirlisting": true,
+            "fallback": "index.html",
+            "disabletrace": true
+
+        }
+    },
+    "logger": "console",
+    "loglevel": "info",
+    "iplogging": false,
+    "logfilepath": "/tmp/",
+    "staticdir": "/etc/menial/static/",
+    "resources": "/etc/menial/resources/",
+    "debug": false,
+    "ssl": {
+        "443": {
+            "on": true,
+            "cert": "/path/to/the/cert.pem",
+            "key": "/path/to/the/key.pem"
+        }
+    }
+}
+        </pre>
+    </p>
+    <h3 id="config-directives">Directives</h3>
+    <p>
+        <ul>
+            <li>
+                <b>hosts:</b> A dictionary which contains a key for each virtual host.
+                <ul>
+                    <li>
+                        <b>*:80:</b> The * represents the hostname and the 80 the port. You can also use a specific hostname if your server has multiple hostnames or if you need to use subdomains.
+                        <br>
+                        Example: sub.localhost:8080
+                        <br>
+                        The value is a dictionary which contains the host specific configuration.
+                    </li>
+                    <ul>
+                        <li>
+                            <b>handler:</b> (Optional, default: "file") The handler is used to specify the request handler. The default handler is "file", which means, static content will be delivered. There are other types of handlers, like "<a href="{{ url_for('documentation.html') }}#python">python</a>" or "redirect".
+                        </li>
+                        <li>
+                            <b>root:</b> The document root directory. When the handler is set to "file", the content of the document root will be delivered. Path can be absolute or relative to the menial binary.
+                        </li>
+                        <li>
+                            <b>staticdir:</b> (default: "default/static/") The directory where the error pages like 404 are and other static content is stored. These will be delivered when the handler is set to "file". You can use the default value if you are happy with minmalistic error pages. Otherwise you can customize the default files or create your own. The error pages must be named as follows: http_error_code.html
+                            <br>
+                            Example: 404.html
+                            <br>
+                            This host specific directive will overwrite global the (optional) global staticdir directive (see below).
+                            <br>
+                            Another important file is dirlisting.html. This file is used as a template, when the dirlisting directive is used. Read more about <a href="{{ url_for('documentation.html') }}#dirlisting">directory listing</a>.
+                        </li>
+                        <li>
+                            <b>target</b> (Mandatory for redirect handlers) The location to which the resource has been moved.
+                        </li>
+                        <li>
+                            <b>permanent</b> (Optional, default: false) Indicates whether the redirect should be temporary (http status 302) or permanent (http status 301). Values must be boolean: true/false.
+                        </li>
+                        <li>
+                            <b>keeptarget</b> (Optional, default: false) If set, the original target of the request will be used for the redirection. If http://foo.tld/ redirects to http://bar.tld/ and `keeptarget` is true, the request for http://foo.tld/page/1/ will be redirected to http://bar.tld/page/1/. If `keeptarget` is false, the same request will be redirected to http://foo.tld/.
+                        </li>
+                        <li>
+                            <b>defaultdocument:</b> (Optional, default: "index.html") Filename of the document which should be served when no file is specified in the URL. All requests for / will get the file with the specified name (if existend in the requested directory).
+                        </li>
+                        <li>
+                            <b>additionalheaders:</b> (Optional, default: blank) If you wish to add headers to each response, you can add them here. Please note: You have to add a line break (\n) at the end of each header. It will be implemented as a list of headers in future version.
+                        </li>
+                        <li>
+                            <b>authfile: </b> (Optional, no default) Path to a file which holds authentication details. If set, a basic auth will be requested by menial and if credentials are provided, they will be checked against the authfile. Please see the <a href="{{ url_for('documentation.html') }}#authfile">authfile</a> section in the documentation for information about the necessary format.
+                        </li>
+                        <li>
+                            <b>dirlisting: </b> (Optional, default: false) If set to true, the files and folders of the current directory are listet and no default document will be delievered. More about <a href="{{ url_for('documentation.html') }}#dirlisting">directory listing</a>.
+                        </li>
+                        <li>
+                            <b>defaultfile: </b> (Optional, default: blank) File which will be delievered whenever the requested file cannot be found. A 404 will be returned only if the configured default file itself cannot be found. Otherwise the default file will always be returned. If the requested file can be found, the default file will not be returned. This option can be used to serve bundled JavaScript files which handle routes by themselves but to also return e.g. CSS files.</a>.
+                        </li>
+                        <li>
+                            <b>fallback: </b> (Optional, default: blank) File which will be delievered whenever the requested file cannot be found. This will prevent 404 Errors. This cann is useful, whenever the a JavaScript application should handle the URL.</a>.
+                        </li>
+                        <li>
+                            <b>disabletrace: </b> (Optional, default: false) When set to true, the TRACE method will return 405: Method Not Allowed.
+                        </li>
+                    </ul>
+                </ul>
+            </li>
+            <li>
+                <b>logger:</b> (Optional, default: "console") Specifies the logger. Loggers can be one of "console" or "file". "console" writes the log entries to stdout and "file" creates a "menial.log" in the "logfilepath".
+            </li>
+            <li>
+                <b>loglevel:</b> (Optional, default: "info") The priority level of log messages. Choices are:
+                <ul>
+                    <li><i>debug:</i> The most verbose level. For development and debug purposes.</li>
+                    <li><i>info:</i> Still a verbose level. For normal use.</li>
+                    <li><i>warning:</i> Only messages which contain warnings are logged.</li>
+                    <li><i>error:</i> Messages are only logged when they were caused by an error.</li>
+                    <li><i>critical:</i> When things go really bad, this level kicks in.</li>
+                </ul>
+                Each level shows the messages of its own level and the messages of the from the subsequent levels.<br>
+                Other values for the loglevel directive will supress logging. So be careful when you change the level to another value.
+            </li>
+            <li>
+                <b>iplogging:</b> (Optional, default: false) If present and set to true, client IP addresses will be logged. Else they will be replaced by xxx.xxx.xxx.xxx in all logfiles.
+            </li>
+            <li>
+                <b>logfilepath:</b> (Optional, default: "/dev/null") Directory to store log files.
+            </li>
+            <li>
+                <b>staticdir:</b> (Optional, default: "default/static/") Like the host specific staticdir configuration (see above); but global. If there is no static directory configured for a host, this global directive will be used. Please be aware, that this is optional, but if no static directory is configured nor a host specific static directory is set, the server will die with a FileNotFoundExcpetion if a the request needs one of the static pages (e.g. a 404.html).
+            </li>
+            <li>
+                <b id="resources_dir">resources:</b> (Optional, default: "resources/") Directory where menial looks for resource files which are not source code. E.g. the directory must contain a file called "mimetypes.tray" which defines the mimetypes for the response header. (More information about mimetypes.tray, can be found in the <a href="{{ url_for('documentation.html') }}#mimetypes">documentation</a>.)
+            </li>
+            <li>
+                <b>debug</b>: (Optional, default: false) This directive can be used during development to reduce the need for server restarts. E.g. if set to true, the mimetypes file will not be stored in memory during server start and edits take effect without a server restart.
+            </li>
+            <li>
+                <b>ssl:</b> (Optional) A dictionary, containing the configuration directives for SSL/TLS encrypted connections.
+                <ul>
+                    <li>
+                        <b>443:</b> Portnumber for which SSL/TLS should be configured. Please keep in mind that menial can handle SSL/TLS connections only port specific. It is not possible to use different certificates for different hosts on the same port. (This means, server name indication is not supported by menial. This is not a missing feature, but a design decision. To check the malicous implications of SNI, please take a look at the <a href="https://en.wikipedia.org/wiki/Server_Name_Indication#Security_implications">Wikipedia article about SNI</a>.)
+                    </li>
+                    <ul>
+                        <li>
+                            <b>on:</b> (Mandatory) A boolean indicating if the SSL/TLS configuration should be used. If set to false, the port will be used for normal/insecure connections. Can be useful for debugging.
+                        <li>
+                            <b>cert:</b> (Mandatory) Path to the certificate file. It must be a PEM file. Currently no additional certificates or certificate chains are supported. If you need a certificate chain, please copy all certificates of that chain into one file and hand over the path to that file to menial via this configuration directive.
+                        <li>
+                            <b>key:</b> (Mandatory) Path to the private/server key file. It must be a PEM file.
+                    </ul>
+                </ul>
+            </li>
+        </ul>
+    </p>
+    <p>
+        You can add a lot of hosts to the config. If you do so, you need to configure each hosts handler and root directory. The other configuration directives (loglevel, logfilepath and logger) are considered as global. Some directives (such as staticdir) can be declared global and orverwritten for certain hosts.
+    </p>
+    <p>
+        A more sophisticated example:
+    </p>
+    <p>
+        <pre class="prettyprint lang-json">
+{
+    "hosts": {
+        "*:80": {
+            "handler": "redirect",
+            "target": "myhomepage.tld:443",
+            "keeptarget": true
+        },
+        "*:443": {
+            "handler": "file",
+            "root": "/var/www/html/myhomepage/"
+        }
+        "myfriend:80": {
+            "handler": "file",
+            "root": "/var/www/html/myfriendshomepage/"
+        },
+        "myfriendscousin:80": {
+            "handler": "file",
+            "root": "/var/www/html/<wbr>myfriendscousinshomepage/"
+            "staticdir": "/home/<wbr>myfriendscousin/menial/static/",
+            "additionalheaders": "Access-Control-Allow-Origin: *\n"
+        },
+        "*:8000": {
+            "handler": "python",
+            "root": "wsgi:application",
+            "staticdir": "/can/be/blank/because/<wbr>python/must/handle/errors/"
+        }
+    },
+    "logger": "file",
+    "loglevel": "info",
+    "iplogging": true,
+    "logfilepath": "/var/log/menial/",
+    "staticdir": "/etc/menial/static/",
+    "resources": "/etc/menial/resources/",
+    "ssl": {
+        "443": {
+            "on": true,
+            "cert": "/path/to/the/cert.pem",
+            "key": "/path/to/the/key.pem"
+        }
+    }
+}
+        </pre>
+    </p>
+    <h3 id="config-custom-config">Custom config</h3>
+        When you run menial you need to pass the location to the config file as first parameter.<br>
+        You can create your own config file (e.g. copying the exsting one) and save it at any accessible locatation. Handover the new file to menial on startup.
+{% endblock %}

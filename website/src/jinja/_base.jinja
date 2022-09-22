@@ -1,0 +1,45 @@
+<html>
+    <head>
+        <title>menial: Always at your service!</title>
+        <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" href="{{ url_for('favicon.png') }}" type="image/png" />
+        <link rel="stylesheet" type="text/css" href="{{ url_for('main.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('sunburst.css') }}" />
+        <script src="{{ url_for('prettify.js') }}"></script>
+    </head>
+    <body>
+        <div id="main">
+            <h1><a href="/">menial 2</a></h1>
+            <p id="claim">
+                Always at your service!
+            </p>
+            <hr>
+            <ul id="navigation">
+                <li>
+                    <a href="/">About</a>
+                </li>
+                <li>
+                    <a href="{{ url_for('help.html') }}">Help</a>
+                </li>
+                <li>
+                    <a href="{{ url_for('documentation.html') }}">Documentation</a>
+                </li>
+                <li>
+                    <a href="{{ url_for('license.html') }}">License</a>
+                </li>
+            </ul>
+            <hr>
+            {% block body %}{% endblock %}
+        </div>
+        <div id=footer>
+            <p>
+                <a href="{{ url_for('imprint.html') }}">Imprint</a> - <a href="{{ url_for('privacy.html') }}">Privacy policy</a>
+            </p>
+            <p>
+                Licensed under <br /> <a href="https://www.gnu.org/licenses/gpl.html">
+                <img src="{{ url_for('gplv3-127x51.png') }}" width="100" /></a>
+            </p>
+        </div>
+    </body>
+</html>

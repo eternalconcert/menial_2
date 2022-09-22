@@ -1,0 +1,23 @@
+{% extends '_base.jinja' %}
+{% block body %}
+    <h2>About</h2>
+    <p>
+        menial is a webserver, written in Rust and licensed under a GPLv3 license. It is intended to be simple in setup and configuration.
+    </p>
+    <h2>Help</h2>
+    <p>
+        The <a href="{{ url_for('help.html') }}">help page</a> will help you with the configuration of your menial installation.
+    </p>
+    <h2>Documentation</h2>
+    <p>
+        If you wish to compile menial youself, you can find an compiling and installation instruction on the <a href="{{ url_for('documentation.html') }}"> documentation page</a>.
+    </p>
+    <h2>Contribute</h2>
+    <p>
+        The source code of menial is hosted on <a href="https://github.com/eternalconcert/menial_2">github</a>. Feel free to send pull requests. Contibutions are welcome!
+    </p>
+    <h2>License</h2>
+    <p>
+        Please make sure you have read the license notices on <a href="{{ url_for('license.html') }}">License</a>. menial is licensed under a GPLv3 license but it uses third-party libraries which are licensed under a MIT license.
+    </p>
+{% endblock %}

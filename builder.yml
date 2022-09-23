@@ -3,9 +3,7 @@ image: cloud.canister.io:5000/eternalconcert/builder-default
 stages:
   - name: build
     run: |
-      echo "-----"
       ls -lah /workbench
-      echo "-----"
       docker login cloud.canister.io:5000 --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
       export MENIAL_VERSION=$MAJOR_VERSION$BUILDER_RUN
       export DEBIAN_FRONTEND=noninteractive
@@ -22,6 +20,9 @@ stages:
       docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:$BUILDER_RUN
       docker push cloud.canister.io:5000/eternalconcert/menial_2:latest
       docker push cloud.canister.io:5000/eternalconcert/menial_2:$BUILDER_RUN
+  - name: website
+    run: |
+      ls -l target/release/
     env:
       DOCKER_USERNAME: ${DOCKER_USERNAME}
       DOCKER_PASSWORD: ${DOCKER_PASSWORD}

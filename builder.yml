@@ -1,11 +1,12 @@
 job: build
 image: cloud.canister.io:5000/eternalconcert/builder-default
 stages:
-
+  - name: build
+    run: |
+      ls -l
   - name: website
     run: |
-      docker login cloud.canister.io:5000 --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
-      ls -l target/release/
+      ls -l
     env:
       DOCKER_USERNAME: ${DOCKER_USERNAME}
       DOCKER_PASSWORD: ${DOCKER_PASSWORD}

@@ -3,10 +3,10 @@ image: cloud.canister.io:5000/eternalconcert/builder-default
 stages:
   - name: build
     run: |
-      ls -l
+      echo "1"
   - name: website
     run: |
-      ls -l
+      echo "2"
     env:
       DOCKER_USERNAME: ${DOCKER_USERNAME}
       DOCKER_PASSWORD: ${DOCKER_PASSWORD}

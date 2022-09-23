@@ -1,0 +1,40 @@
+{% extends '_base.jinja' %}
+{% block body %}
+    <h2>Download</h2>
+
+    <h3>Sources</h3>
+    <ul>
+        <li>
+            Download: <a href="{{ url_for('menial_2.tar.gz') }}">menial_2.tar.gz</a>
+        </li>
+        <li>
+            Checksum: <span class="hashvalue">{{ menial_tar_gz_hash }} (SHA256)</span>
+        </li>
+        <li>
+            Packaged: {{ timestamp }}
+        </li>
+    </ul>
+
+    <h3>Binary (X86_64)</h3>
+    <ul>
+        <li>
+            <a href="{{ url_for('menial_2.bin') }}">menial_2.bin</a>
+        </li>
+        <li>
+            Checksum: <span class="hashvalue">{{ menial_hash }} (SHA256)</span>
+        </li>
+        <li>
+            Built: {{ timestamp }}
+        </li>
+    </ul>
+
+    <h3>License</h3>
+    <p>
+        Please make sure you have read the license notices on <a href="{{ url_for('license.html') }}">License</a>. menial is licensed under a GPLv3 license but it uses third-party libraries which are licensed under a MIT license.
+    </p>
+    <h3>Disclaimer</h3>
+    <p>
+        This software comes without any warranty. You use it on your own risk. It may contain bugs, viruses or harm your hardware in another way. The developer is not responsible for any consequences which may occur because of using the software.
+    </p>
+
+{% endblock %}

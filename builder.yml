@@ -12,3 +12,14 @@ stages:
       DOCKER_USERNAME: ${DOCKER_USERNAME}
       DOCKER_PASSWORD: ${DOCKER_PASSWORD}
       MAJOR_VERSION: 2.0.
+  - name: website
+    run: |
+      echo "2"
+      echo $DOCKER_USERNAME
+      echo $DOCKER_PASSWORD
+      docker login cloud.canister.io:5000 -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      echo "======"
+    env:
+      DOCKER_USERNAME: ${DOCKER_USERNAME}
+      DOCKER_PASSWORD: ${DOCKER_PASSWORD}
+      MAJOR_VERSION: 2.0.

@@ -12,6 +12,9 @@ stages:
       echo $DOCKER_PASSWORD
       docker login cloud.canister.io:5000 -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
       echo "======"
+    env:
+      TEST: "Hello 1111111111111111111111111"
+
   - name: website
     run: |
       echo "2"
@@ -19,3 +22,5 @@ stages:
       echo $DOCKER_PASSWORD
       docker login cloud.canister.io:5000 -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
       echo "======"
+    env:
+      TEST: "Hello 22222222222222222222222222"

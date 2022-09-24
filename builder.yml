@@ -1,25 +1,28 @@
 job: build
 image: cloud.canister.io:5000/eternalconcert/builder-default
+env:
+  DOCKER_USERNAME: ${DOCKER_USERNAME}
+  DOCKER_PASSWORD: ${DOCKER_PASSWORD}
+  MAJOR_VERSION: 2.0.
 stages:
   - name: build
     run: |
-      echo "1"
-      echo $DOCKER_USERNAME
-      echo $DOCKER_PASSWORD
-      docker login cloud.canister.io:5000 -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-      echo "======"
-    env:
-      DOCKER_USERNAME: ${DOCKER_USERNAME}
-      DOCKER_PASSWORD: ${DOCKER_PASSWORD}
-      MAJOR_VERSION: 2.0.
+      docker login cloud.canister.io:5000 --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+      export MENIAL_VERSION=$MAJOR_VERSION$BUILDER_RUN
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install wget build-essential libssl-dev pkg-config -y
+      wget https://sh.rustup.rs -O rustup.sh
+      sh rustup.sh -y
+      source $HOME/.cargo/env
+      cargo build --release
+      cp target/release/main /out/
+      ./deployment/generate_index.sh $BUILDER_RUN $MAJOR_VERSION$BUILDER_RUN
+      docker build . -t menial_2 --no-cache
+      docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:latest
+      docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:$BUILDER_RUN
+      docker push cloud.canister.io:5000/eternalconcert/menial_2:latest
+      docker push cloud.canister.io:5000/eternalconcert/menial_2:$BUILDER_RUN
   - name: website
     run: |
-      echo "2"
-      echo $DOCKER_USERNAME
-      echo $DOCKER_PASSWORD
-      docker login cloud.canister.io:5000 -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-      echo "======"
-    env:
-      DOCKER_USERNAME: ${DOCKER_USERNAME}
-      DOCKER_PASSWORD: ${DOCKER_PASSWORD}
-      MAJOR_VERSION: 2.0.
+      ls target/release/

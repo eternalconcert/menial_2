@@ -1,9 +1,5 @@
 job: build
 image: cloud.canister.io:5000/eternalconcert/builder-default
-env:
-  DOCKER_USERNAME: ${DOCKER_USERNAME}
-  DOCKER_PASSWORD: ${DOCKER_PASSWORD}
-  MAJOR_VERSION: 2.0.
 stages:
   - name: build
     run: |
@@ -12,9 +8,6 @@ stages:
       echo $DOCKER_PASSWORD
       docker login cloud.canister.io:5000 -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
       echo "======"
-    env:
-      TEST: "Hello 1111111111111111111111111"
-
   - name: website
     run: |
       echo "2"
@@ -23,4 +16,6 @@ stages:
       docker login cloud.canister.io:5000 -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
       echo "======"
     env:
-      TEST: "Hello 22222222222222222222222222"
+      DOCKER_USERNAME: ${DOCKER_USERNAME}
+      DOCKER_PASSWORD: ${DOCKER_PASSWORD}
+      MAJOR_VERSION: 2.0.

@@ -35,6 +35,7 @@ fn get_content_type(filename_extension: String) -> String {
         "mp4" => res = "audio/mp4",
         "jpg" => res = "image/jpeg",
         "jpeg" => res = "image/jpeg",
+        "js" => res = "text/javascript",
         "json" => res = "application/json",
         "pdf" => res = "application/pdf",
         "png" => res = "image/png",

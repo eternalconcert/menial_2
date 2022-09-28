@@ -43,6 +43,7 @@ fn get_content_type(filename_extension: String) -> String {
         "txt" => res = "text/txt",
         "woff" => res = "font/woff",
         "woff2" => res = "font/woff2",
+        "xml" => res = "application/xml",
         "zip" => res = "application/zip",
         _ => res = "text/plain"
     };

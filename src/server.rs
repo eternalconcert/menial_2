@@ -105,6 +105,7 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     let mut host = String::from("");
     let mut modified_since = String::from("");
     let mut none_match = String::from("");
+
     for line in request_content.split("\n") {
         if line.starts_with("GET") || line.starts_with("POST") {
             match line.find("HTTP") {
@@ -125,6 +126,16 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     }
 
     log!("debug", format!("Requested host: {}", host));
+
+
+    let split_for_search = document.split("?");
+    let parts: Vec<&str> = split_for_search.collect();
+    if parts.len() > 1 {
+        let search_params = parts[1].to_string();
+        log!("debug", format!("Search params (NOT used at the moment!): {}", search_params));
+        log!("debug", "Removed search params from document.");
+        document = parts[0].to_string();
+    }
 
     let mut host_config = CONFIG.host_configs.values().collect::<Vec<&HostConfig>>()[0];
 

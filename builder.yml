@@ -7,7 +7,7 @@ env:
 stages:
   - name: build
     run: |
-      docker login cloud.canister.io:5000 --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+      docker login docker.softcreate.de --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
       export MENIAL_VERSION=$MAJOR_VERSION$BUILDER_RUN
       export DEBIAN_FRONTEND=noninteractive
       apt-get update
@@ -19,10 +19,10 @@ stages:
       cp target/release/main /out/
       ./deployment/generate_index.sh $BUILDER_RUN $MAJOR_VERSION$BUILDER_RUN
       docker build . -t menial_2 --no-cache
-      docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:latest
-      docker tag menial_2 cloud.canister.io:5000/eternalconcert/menial_2:$BUILDER_RUN
-      docker push cloud.canister.io:5000/eternalconcert/menial_2:latest
-      docker push cloud.canister.io:5000/eternalconcert/menial_2:$BUILDER_RUN
+      docker tag menial_2 docker.softcreate.de/menial_2:latest
+      docker tag menial_2 docker.softcreate.de/menial_2:$BUILDER_RUN
+      docker push docker.softcreate.de/menial_2:latest
+      docker push docker.softcreate.de/menial_2:$BUILDER_RUN
   - name: website
     run: |
       ls target/release/

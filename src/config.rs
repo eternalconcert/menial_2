@@ -11,6 +11,7 @@ pub struct HostConfig {
     pub resources: String,
     pub redirect_to: String,
     pub redirect_permanent: bool,
+    pub authfile: String,
 }
 
 pub struct SslConfig {
@@ -109,6 +110,13 @@ pub fn _get_config() -> Config {
                 .value_name("redirect_permanent")
                 .help("Should redirect permanent"),
         )
+        .arg(
+            Arg::with_name("authfile")
+                .short("a")
+                .long("authfile")
+                .value_name("authfile")
+                .help("Path to the authentication file for basic auth"),
+        )
         .get_matches();
 
     let config_path = String::from(matches.value_of("file").unwrap_or(""));
@@ -126,25 +134,27 @@ pub fn _get_config() -> Config {
 
             let port;
             if combined_host.split(":").count() == 2 {
-                port = combined_host.split(":").collect::<Vec<&str>>()[1];
+                port = combined_host.split(":").collect::<Vec<&str>>()[1].to_owned();
             } else {
-                port = "80";
+                port = "80".to_owned();
             }
 
-            let root = item.1["root"].as_str().unwrap_or("");
-            let resources = item.1["resources"].as_str().unwrap_or("");
-            let redirect_to = item.1["redirect_to"].as_str().unwrap_or("");
+            let root = item.1["root"].as_str().unwrap_or("").to_owned();
+            let resources = item.1["resources"].as_str().unwrap_or("").to_owned();
+            let redirect_to = item.1["redirect_to"].as_str().unwrap_or("").to_owned();
             let redirect_permanent = item.1["redirect_permanent"].as_bool().unwrap_or(false);
+            let authfile = item.1["authfile"].as_str().unwrap_or("").to_owned();
 
             host_config.insert(
                 combined_host.to_owned(),
                 HostConfig {
                     host: combined_host.to_owned(),
-                    port: port.to_owned(),
-                    root: root.to_owned(),
-                    resources: resources.to_owned(),
-                    redirect_to: redirect_to.to_owned(),
-                    redirect_permanent: redirect_permanent,
+                    port,
+                    root,
+                    resources,
+                    redirect_to,
+                    redirect_permanent,
+                    authfile,
                 },
             );
         }
@@ -185,16 +195,18 @@ pub fn _get_config() -> Config {
 
         let redirect_to = matches.value_of("redirect_to").unwrap_or("").to_owned();
         let redirect_permanent = matches.is_present("redirect_permanent");
+        let authfile = matches.value_of("authfile").unwrap_or("").to_owned();
 
         host_config.insert(
             combined_host,
             HostConfig {
-                host: host.to_owned(),
+                host,
                 port: port.to_owned(),
-                root: root,
-                resources: resources,
-                redirect_to: redirect_to,
-                redirect_permanent: redirect_permanent,
+                root,
+                resources,
+                redirect_to,
+                redirect_permanent,
+                authfile,
             },
         );
 
@@ -203,8 +215,8 @@ pub fn _get_config() -> Config {
                 port.to_owned(),
                 SslConfig {
                     port: port.to_owned(),
-                    key: key,
-                    cert: cert,
+                    key,
+                    cert,
                 },
             );
         }

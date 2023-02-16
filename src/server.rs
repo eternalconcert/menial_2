@@ -1,6 +1,7 @@
 use crate::utils::{get_base_headers, get_response_headers, make304, intrusion_try_detected};
 use crate::config::{HostConfig, CONFIG};
 use crate::{log, ThreadPool, LOG_LEVEL};
+use base64::{Engine as _, engine::{general_purpose}};
 
 use ansi_term::Colour;
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -105,6 +106,7 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     let mut host = String::from("");
     let mut modified_since = String::from("");
     let mut none_match = String::from("");
+    let mut auth = String::from("");
 
     for line in request_content.split("\n") {
         if line.starts_with("GET") || line.starts_with("POST") {
@@ -118,6 +120,8 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
             none_match = String::from(&line[15..line.len() - 1]);
         } else if line.starts_with("Host:") {
             host = String::from(&line[6..line.len() - 1]);
+        } else if line.starts_with("Authorization:") {
+            auth = String::from(&line[15..line.len() - 1]);
         }
     }
 
@@ -147,6 +151,43 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     }
 
     let base_headers = get_base_headers();
+
+    if host_config.authfile != "" {
+        let unauthorized = (String::from("HTTP/1.1 401 Unauthorized\n"), Vec::from("WWW-Authenticate: Basic realm=User Visible Realm\n\n"));
+
+        if auth.len() > 5 {
+            let basic_auth = String::from_utf8(general_purpose::STANDARD.decode(String::from(&auth[6..auth.len() - 0])).unwrap()).unwrap();
+            let split_for_auth: Vec<&str> = basic_auth.split(":").collect();
+            let username = split_for_auth[0].to_string();
+            let password = general_purpose::STANDARD.encode(split_for_auth[1].to_string());
+
+            let raw_authfile_content = fs::read_to_string(&host_config.authfile).unwrap();
+
+            let mut authenticated = false;
+            for line in raw_authfile_content.split("\n") {
+                let line_splitted: Vec<&str> = line.split(":").collect();
+                if line_splitted.len() != 2 {
+                    continue;
+                }
+                let line_username = line_splitted[0];
+                let line_password = line_splitted[1];
+                if line_username.to_string() == username && line_password.to_string() == password {
+                    authenticated = true;
+                    log!("debug", String::from("User authorized"));
+                    break;
+                };
+            }
+            if !authenticated {
+                log!("debug", String::from("User not authorized: Wrong password/username"));
+                return unauthorized;
+            }
+        } else {
+            log!("debug", String::from("User not authorized: First attempt, not asked for password/username"));
+            return unauthorized;
+        }
+
+    }
+
 
     if host_config.redirect_to != "" {
         let status_line;

@@ -22,5 +22,6 @@ stages:
       #docker push docker.softcreate.de/menial_2:$BUILDER_RUN
   - name: website
     run: |
-      mkdir -p ../website/build/styles
-    	anvil -i src/ -s src/less/ -o build/ -t "menial 2" -v ../website/hashvalues.json
+      ls
+      #mkdir -p ../website/build/styles
+    	#anvil -i src/ -s src/less/ -o build/ -t "menial 2" -v ../website/hashvalues.json

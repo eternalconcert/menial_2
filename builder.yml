@@ -25,5 +25,10 @@ stages:
       #docker push docker.softcreate.de/menial_2:$BUILDER_RUN
   - name: website
     run: |
+      apt update
+      apt install curl
       curl -s --compressed "https://eternalconcert.github.io/ppa/KEY.gpg" | apt-key add -
-      #curl -s --compressed -o /etc/apt/sources.list.d/github_ppa.list "https://eternalconcert.github.io/ppa/files.list"
+      curl -s --compressed -o /etc/apt/sources.list.d/github_ppa.list "https://eternalconcert.github.io/ppa/files.list"
+      apt install anvil
+
+

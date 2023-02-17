@@ -26,7 +26,7 @@ stages:
   - name: website
     run: |
       apt-get update
-      apt-get install -y curl gnupg2 pip3 npm
+      apt-get install -y curl gnupg2 python3-pip nodejs npm
       curl -s --compressed "https://eternalconcert.github.io/ppa/KEY.gpg" | apt-key add -
       curl -s --compressed -o /etc/apt/sources.list.d/github_ppa.list "https://eternalconcert.github.io/ppa/files.list"
       apt-get update

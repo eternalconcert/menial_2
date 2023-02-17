@@ -22,4 +22,4 @@ stages:
       #docker push docker.softcreate.de/menial_2:$BUILDER_RUN
   - name: website
     run: |
-      ls -la
+      mkdir -p ../website/build/styles

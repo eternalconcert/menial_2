@@ -1,5 +1,5 @@
 job: build
-image: docker.softcreate.de/builder-menial
+image: cloud.canister.io:5000/eternalconcert/builder-default
 env:
   DOCKER_USERNAME: ${DOCKER_USERNAME}
   DOCKER_PASSWORD: ${DOCKER_PASSWORD}

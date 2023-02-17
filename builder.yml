@@ -23,4 +23,5 @@ stages:
   - name: website
     run: |
       mkdir -p website/build/styles
-      anvil -i src/ -s src/less/ -o build/ -t "menial 2" -v website/hashvalues.json
+      npm install minimist
+      #anvil -i src/ -s src/less/ -o build/ -t "menial 2" -v website/hashvalues.json

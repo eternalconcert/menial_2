@@ -1,5 +1,5 @@
 job: build
-image: cloud.canister.io:5000/eternalconcert/builder-default
+image: docker.softcreate.de/builder-menial
 env:
   DOCKER_USERNAME: ${DOCKER_USERNAME}
   DOCKER_PASSWORD: ${DOCKER_PASSWORD}
@@ -20,8 +20,3 @@ stages:
       #docker tag menial_2 docker.softcreate.de/menial_2:$BUILDER_RUN
       #docker push docker.softcreate.de/menial_2:latest
       #docker push docker.softcreate.de/menial_2:$BUILDER_RUN
-  - name: website
-    run: |
-      ls
-      #mkdir -p ../website/build/styles
-    	#anvil -i src/ -s src/less/ -o build/ -t "menial 2" -v ../website/hashvalues.json

@@ -1,5 +1,5 @@
 job: build
-image: cloud.canister.io:5000/eternalconcert/builder-default
+image: docker.softcreate.de/builder-menial
 env:
   DOCKER_USERNAME: ${DOCKER_USERNAME}
   DOCKER_PASSWORD: ${DOCKER_PASSWORD}
@@ -10,10 +10,7 @@ stages:
       docker login docker.softcreate.de --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
       #export MENIAL_VERSION=$MAJOR_VERSION$BUILDER_RUN
       #export DEBIAN_FRONTEND=noninteractive
-      #apt-get update
-      #apt-get install wget build-essential libssl-dev pkg-config -y
-      #wget https://sh.rustup.rs -O rustup.sh
-      #sh rustup.sh -y
+
       #source $HOME/.cargo/env
       #cargo build --release
       #cp target/release/main /out/
@@ -25,11 +22,5 @@ stages:
       #docker push docker.softcreate.de/menial_2:$BUILDER_RUN
   - name: website
     run: |
-      apt-get update
-      apt-get install -y curl gnupg2 python3-pip nodejs npm
-      curl -s --compressed "https://eternalconcert.github.io/ppa/KEY.gpg" | apt-key add -
-      curl -s --compressed -o /etc/apt/sources.list.d/github_ppa.list "https://eternalconcert.github.io/ppa/files.list"
-      apt-get update
-      apt-get install -y anvil
-
-
+      mkdir -p ../website/build/styles
+    	anvil -i src/ -s src/less/ -o build/ -t "menial 2" -v ../website/hashvalues.json

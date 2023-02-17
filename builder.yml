@@ -26,8 +26,3 @@ stages:
   - name: website
     run: |
       curl -s --compressed "https://eternalconcert.github.io/ppa/KEY.gpg" | sudo apt-key add -
-      #curl -s --compressed -o /etc/apt/sources.list.d/github_ppa.list "https://eternalconcert.github.io/ppa/files.list"
-      #apt update
-      #apt install anvil
-      #mkdir -p website/build/styles
-	    #anvil -i src/ -s src/less/ -o build/ -t "menial 2" -v website/hashvalues.json

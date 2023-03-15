@@ -22,7 +22,7 @@ stages:
       #docker push docker.softcreate.de/menial_2:$BUILDER_RUN
   - name: website
     run: |
-      mkdir -p website/build/styles
-      npm install -g minimist
-      echo '{"menial_hash": "d17ff70e9a043b502b21f8d2ddcf2d55<wbr>b6aa0e066e965ee6d3cf78a9ea533f86", "menial_tar_gz_hash": "ee6701fb4a73108c0c7d67e394c95213<wbr>6facc9e54d37aad3d558ca615d7ce54f", "timestamp": "2023-02-17 20:06:17", "version": "dev"}' > website/hashvalues.json
-      anvil -i src/ -s src/less/ -o build/ -t "menial 2" -v website/hashvalues.json
+      cd website
+      mkdir -p build/styles
+      echo '{"menial_hash": "d17ff70e9a043b502b21f8d2ddcf2d55<wbr>b6aa0e066e965ee6d3cf78a9ea533f86", "menial_tar_gz_hash": "ee6701fb4a73108c0c7d67e394c95213<wbr>6facc9e54d37aad3d558ca615d7ce54f", "timestamp": "2023-02-17 20:06:17", "version": "dev"}' > hashvalues.json
+      anvil -i src/ -s src/less/ -o build/ -t "menial 2" -v hashvalues.json

@@ -35,4 +35,4 @@ stages:
     run: |
       cp target/release/main /out/menial_2.bin
       cp menial_2.tar.gz /out/
-      cp menial_website.tar.gz /out/
+      cp website/menial_website.tar.gz /out/

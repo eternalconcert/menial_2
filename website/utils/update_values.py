@@ -1,5 +1,7 @@
 import sys
 import json
+import subprocess
+
 from datetime import datetime
 from hashlib import sha256
 
@@ -21,6 +23,7 @@ with open('../website/hashvalues.json', 'w+') as f:
         "menial_hash": menial_hash,
         "menial_tar_gz_hash": menial_tar_gz_hash,
         "timestamp": timestamp,
-        "version": version
+        "version": version,
+        "os_info": subprocess.check_output(['uname','-mrs']).decode().strip()
     }
     f.write(json.dumps(d))

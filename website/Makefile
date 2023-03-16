@@ -5,7 +5,6 @@ clean:
 	rm -f ../website/src/static/menial_2.bin
 	rm -rf website/build/*
 
-
 bin: clean
 	cd ..
 	cargo build -r

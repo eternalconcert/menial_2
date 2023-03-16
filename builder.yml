@@ -11,7 +11,7 @@ stages:
       cargo build --release
   - name: website
     run: |
-      cp target/release/main src/static/menial_2.bin
+      cp target/release/main website/src/static/menial_2.bin
       tar -zcvf menial_2.tar.gz src/
       cp menial_2.tar.gz website/src/static/
 

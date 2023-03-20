@@ -188,19 +188,8 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
 
     }
 
-
     if host_config.redirect_to != "" {
-        let status_line;
-        if host_config.redirect_permanent {
-            status_line = "HTTP/1.1 301 Moved Permanently";
-        } else {
-            status_line = "HTTP/1.1 302 Found";
-        }
-        let headers = format!(
-            "{}\nLocation: {}\n{}\r\n\r\n",
-            status_line, host_config.redirect_to, base_headers,
-        );
-        return (headers, Vec::new());
+        return get_redirect_response(host_config.redirect_permanent, host_config.redirect_to.to_owned(), base_headers);
     }
 
     let document_root = host_config.root.to_owned();
@@ -286,4 +275,18 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     );
 
     return (headers, contents);
+}
+
+fn get_redirect_response(premanent: bool, to: String, base_headers: String) -> (String, Vec<u8>) {
+    let status_line;
+    if premanent {
+        status_line = "HTTP/1.1 301 Moved Permanently";
+    } else {
+        status_line = "HTTP/1.1 302 Found";
+    }
+    let headers = format!(
+        "{}\nLocation: {}\n{}\r\n\r\n",
+        status_line, to, base_headers,
+    );
+    return (headers, Vec::new());
 }

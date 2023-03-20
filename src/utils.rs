@@ -1,7 +1,9 @@
 use crate::config::CONFIG;
 use std::collections::HashSet;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use ansi_term::Colour;
+use std::fs;
+use sha2::{Digest, Sha256};
 
 use crate::{log, LOG_LEVEL};
 
@@ -51,7 +53,6 @@ fn get_content_type(filename_extension: String) -> String {
     return res.to_string();
 }
 
-
 pub fn get_response_headers(contents: &std::vec::Vec<u8>, modified: DateTime<Utc>, hash: &String, filename: &String) -> (String, String, String, String) {
     let content_length = format!("Content-Length: {}", contents.len());
 
@@ -64,7 +65,6 @@ pub fn get_response_headers(contents: &std::vec::Vec<u8>, modified: DateTime<Utc
     );
 
     let extension = get_file_name_extension(filename);
-
 
     let content_type = format!("Content-Type: {}", get_content_type(extension));
 
@@ -103,4 +103,68 @@ pub fn intrusion_try_detected(request_content: String) -> bool {
     let double_dots: Vec<_> = request_content.match_indices("..").collect();
     let double_slashes: Vec<_> = request_content.match_indices("//").collect();
     return (double_slashes.len() > 1) || (double_dots.len() > 0);
+}
+
+pub fn get_file_data(filename: &String) -> (Vec<u8>, chrono::DateTime<chrono::Utc>, chrono::NaiveDateTime, String) {
+    let contents = fs::read(&filename).unwrap();
+
+    let file_modified: DateTime<Utc> = fs::metadata(&filename).unwrap().modified().unwrap().into();
+    let modified_short = NaiveDateTime::parse_from_str(
+        &file_modified.format("%a, %d %b %Y %H:%M:%S GMT").to_string(),
+        "%a, %d %b %Y %H:%M:%S GMT",
+    )
+    .unwrap();
+
+    let hash = format!("{:x}", Sha256::digest(&contents));
+
+    return (contents, file_modified, modified_short, hash);
+}
+
+pub fn get_redirect_response(permanent: bool, to: String, base_headers: String) -> (String, Vec<u8>) {
+    let status_line;
+    if permanent {
+        status_line = "HTTP/1.1 301 Moved Permanently";
+    } else {
+        status_line = "HTTP/1.1 302 Found";
+    }
+    let headers = format!(
+        "{}\nLocation: {}\n{}\r\n\r\n",
+        status_line, to, base_headers,
+    );
+    return (headers, Vec::new());
+}
+
+pub fn get_default_status_page(status: u16) -> (Vec<u8>, chrono::DateTime<chrono::Utc>, chrono::NaiveDateTime, String) {
+
+    let file_modified = chrono::offset::Utc::now();
+
+    let modified_short = NaiveDateTime::parse_from_str(
+        &file_modified.format("%a, %d %b %Y %H:%M:%S GMT").to_string(),
+        "%a, %d %b %Y %H:%M:%S GMT",
+    ).unwrap();
+
+    return (String::from(format!("{} - Menial 2", get_status_part(status))).as_bytes().to_vec(), file_modified, modified_short, String::from(""))
+}
+
+pub fn get_status_line(status: u16) -> String {
+    return String::from(format!("HTTP/1.1 {}", get_status_part(status)));
+}
+
+fn get_status_part(status: u16) -> String {
+    let status_line;
+    match status {
+        200 => {
+            status_line = String::from("200 OK");
+        }
+        400 => {
+            status_line = String::from("400 BAD REQUEST");
+        }
+        404 => {
+            status_line = String::from("404 NOT FOUND");
+        }
+        _ => {
+            panic!("Unknown Status: {}", status);
+        }
+    }
+    return status_line;
 }

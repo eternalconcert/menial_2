@@ -190,7 +190,7 @@ pub fn _get_config() -> Config {
         let cert = String::from(matches.value_of("cert").unwrap_or("")).to_owned();
 
         let resources =
-            String::from(matches.value_of("resources").unwrap_or("default/pages")).to_owned();
+            String::from(matches.value_of("resources").unwrap_or("")).to_owned();
         let combined_host = format!("{}:{}", host.to_owned(), port);
 
         let redirect_to = matches.value_of("redirect_to").unwrap_or("").to_owned();

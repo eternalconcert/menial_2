@@ -1,4 +1,13 @@
-use crate::utils::{get_base_headers, get_response_headers, make304, intrusion_try_detected};
+use crate::utils::{
+    get_base_headers,
+    get_response_headers,
+    make304,
+    intrusion_try_detected,
+    get_file_data,
+    get_redirect_response,
+    get_status_line,
+    get_default_status_page
+};
 use crate::config::{HostConfig, CONFIG};
 use crate::{log, ThreadPool, LOG_LEVEL};
 use base64::{Engine as _, engine::{general_purpose}};
@@ -12,7 +21,6 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 use std::path::Path;
 use std::sync::Arc;
-use sha2::{Digest, Sha256};
 
 
 pub fn run_ssl_server(port: usize) {
@@ -185,7 +193,6 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
             log!("debug", String::from("User not authorized: First attempt, not asked for password/username"));
             return unauthorized;
         }
-
     }
 
     if host_config.redirect_to != "" {
@@ -214,7 +221,6 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     let doc = String::from(format!("{}{}", document_root, document));
     log!("debug", format!("Requested document path: {}", doc));
 
-    let mut status_line: String = String::from("");
     let mut filename: String = String::from("");
     if status == 0 {
         if Path::new(&doc).exists() && request_content.starts_with("GET") {
@@ -225,32 +231,26 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
         };
     }
 
+    let status_line = get_status_line(status);
+
+    let (contents, file_modified, modified_short, hash);
     match status {
         200 => {
-            status_line = String::from("HTTP/1.1 200 OK");
-            filename = doc;
+            (contents, file_modified, modified_short, hash) = get_file_data(&doc);
         }
-        400 => {
-            status_line = String::from("HTTP/1.1 400 BAD REQUEST");
-            filename = String::from(format!("{}/400.html", resources_root));
+        400 | 404 => {
+            if host_config.resources != "" {
+                filename = String::from(format!("{}/{}.html", resources_root, status));
+                (contents, file_modified, modified_short, hash) = get_file_data(&filename);
+            } else {
+                filename = String::from(format!("{}.html", status));
+                (contents, file_modified, modified_short, hash) = get_default_status_page(status);
+            }
         }
-        404 => {
-            status_line = String::from("HTTP/1.1 404 NOT FOUND");
-            filename = String::from(format!("{}/404.html", resources_root));
+        _ => {
+            panic!("Unknown Statsus: {}", status);
         }
-        _ => {}
     }
-
-    let contents = fs::read(&filename).unwrap();
-
-    let file_modified: DateTime<Utc> = fs::metadata(&filename).unwrap().modified().unwrap().into();
-    let modified_short = NaiveDateTime::parse_from_str(
-        &file_modified.format("%a, %d %b %Y %H:%M:%S GMT").to_string(),
-        "%a, %d %b %Y %H:%M:%S GMT",
-    )
-    .unwrap();
-
-    let hash = format!("{:x}", Sha256::digest(&contents));
 
     let (content_length, etag, modified, content_type) = get_response_headers(&contents, file_modified, &hash, &filename);
 
@@ -275,18 +275,4 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     );
 
     return (headers, contents);
-}
-
-fn get_redirect_response(premanent: bool, to: String, base_headers: String) -> (String, Vec<u8>) {
-    let status_line;
-    if premanent {
-        status_line = "HTTP/1.1 301 Moved Permanently";
-    } else {
-        status_line = "HTTP/1.1 302 Found";
-    }
-    let headers = format!(
-        "{}\nLocation: {}\n{}\r\n\r\n",
-        status_line, to, base_headers,
-    );
-    return (headers, Vec::new());
 }

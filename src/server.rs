@@ -221,7 +221,7 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     let doc = String::from(format!("{}{}", document_root, document));
     log!("debug", format!("Requested document path: {}", doc));
 
-    let mut filename: String = String::from("");
+    let filename: String;
     if status == 0 {
         if Path::new(&doc).exists() && request_content.starts_with("GET") {
             status = 200;
@@ -237,6 +237,7 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     match status {
         200 => {
             (contents, file_modified, modified_short, hash) = get_file_data(&doc);
+            filename = doc;
         }
         400 | 404 => {
             if host_config.resources != "" {
@@ -248,7 +249,7 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
             }
         }
         _ => {
-            panic!("Unknown Statsus: {}", status);
+            panic!("Unknown Status: {}", status);
         }
     }
 

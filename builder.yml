@@ -7,6 +7,9 @@ env:
 stages:
   - name: build
     run: |
+      # Move to builder image:
+      apt-get install build-essential libssl-dev -y
+
       source $HOME/.cargo/env
       cargo build --release
   - name: website

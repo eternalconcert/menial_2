@@ -3,23 +3,20 @@
     <h2>Documentation</h2>
     <h3>Compiling</h3>
     <p>
-        To compile menial, you can use the following commands:
+        To compile menial 2, you can use the following commands:
     </p>
     <p>
         <pre class="prettyprint lang-c">
-g++ $(find src/ -name "*.cpp") -o menial.bin -std=c++11 -pthread -Wall -I /usr/include/python3.8m/ -l python3.8m -I src/include/ -lssl -lcrypto
+cargo build -r
         </pre>
     </p>
     <h3>Prerequisites</h3>
     <ul>
         <li>
-            g++/gcc
+            rust/cargo
         </li>
         <li>
             OpenSSL headers
-        </li>
-        <li>
-            Python3
         </li>
     </ul>
 
@@ -32,9 +29,10 @@ g++ $(find src/ -name "*.cpp") -o menial.bin -std=c++11 -pthread -Wall -I /usr/i
         An authentication file has the following structure:
     </p>
     <p>
-        <pre class="prettyprint lang-c">
+        <pre>
+            <code class="lang-c">
 user:hashvalue
-...
+...         </code>
         </pre>
     </p>
     <p>
@@ -63,98 +61,7 @@ jane:c953b25ee7b3e7fb5dbf6e8f02<wbr>a4e303dbe898156bfa6e700c81f9<wbr>d8e8219f8e
 
     <h4 id="dirlisting">Directory listing</h4>
     <p>
-        menial comes with the ability to list directory content instead of trying to deliever a default document. If the configuration directive "dirlisting" is set to "true", no default document will be delievered and the directory content will be listed.
-    </p>
-    <p>
-        The list will contain all directories and files in the current folder; directories before the files. There is also a link to the parent directory included. If you are already on the document root level, the link to the parent directory will have no effect, except a reloading of the current page.
-    </p>
-    <p>
-        The page which shows the directory content can be customized by editing "dirlisting.html" in the used static directory (the place where the error pages are stored aswell).
-    </p>
-    <p>
-        The file should contain the placeholders &lt;_DIR_&gt; and &lt;_LISTING_&gt;. &lt;_DIR_&gt; will be replaced by the current directory path (relative to the document root). &lt;_LISTING_&gt; will be replaced by the directory content.
-    </p>
-    <p>
-        The listing will be rendered as an unsorted list with some classnames to attach your own stylings to. It has the following structure and classnames:
-    </p>
-    <p>
-        <pre class="prettyprint lang-html">
-&lt;ul class="dirlisting list"&gt;
-    &lt;li class="dirlisting linkparent"&gt;
-        &lt;a href=".."&gt;Parent directory..&lt;/a&gt;
-    &lt;/li&gt;
-    &lt;li class="dirlisting dir"&gt;
-        &lt;a href=Live%20in%20Oberhausen/&gt;Live in Oberhausen&lt;/a&gt;
-    &lt;/li&gt;
-    &lt;li class="dirlisting file"&gt;
-        &lt;a href=01.%20Top<wbr>%20level%20predator.mp3&gt;01. Top level predator.mp3&lt;/a&gt;
-    &lt;/li&gt;
-...
-&lt;/ul&gt;
-        </pre>
-    </p>
-    <p>
-        The &lt;_DIR_&gt; placeholder will be replaced just by the directory path without any classes or id's. None of the placeholders must be used and can be used more than once.
+        Not implemented yet.
     </p>
 
-    <h3>Resources</h3>
-    <p>
-        menial needs some resources to work properly. This files have fix names and must be included in the <a href="{{ url_for('help.html') }}#resources_dir">resources directory</a>.
-    </p>
-    <h4 id="mimetypes">Mimetypes file</h4>
-    <p>
-        To get the correct mimetype for a requested file or page, menial need to look up file name extention. The resource file "mimetypes.tray", must contain a mapping from file name extension on mimetype. File name extension and mimetype must be separareted by at least one blank (" "). The example below show some valid entries.
-    </p>
-    <p>
-        <pre class="prettyprint lang-html">
-bin         application/octet-stream
-class       application/octet-stream
-com         application/octet-stream
-css         text/css
-csv         text/comma-separated-values
-extension   application/octet-stream
-file        application/octet-stream
-flac        audio/flac
-gzip        application/gzip
-jpg         image/jpg
-json        application/json
-log         text/plain
-mp3         audio/mpeg
-pdf         application/pdf
-png         image/png
-tar         application/x-tar
-ttf         font/ttf
-woff        font/woff
-woff2       font/woff2
-zip         application/zip
-        </pre>
-    </p>
-    <p>
-        If no file name extension matches, the default mimetype "text/html; charset=utf-8;" will be used.
-    </p>
-
-    <h3>Handlers</h3>
-    <h4 id="python">Python</h4>
-    <p>
-        menial implements the <a href="https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface">Web Server Gateway Interface/WsGI</a>. To handle WSGI applictions, the handler of the desired host must be set to "python". The root of the host must be the WSGI application, which will be called by menial.
-    </p>
-    <p>
-        The root directive must have one of the following forms:
-    </p>
-    <p>
-        <i>([module].)[module]</i>
-        <br>
-        <i>e.g. myapp.wsgi</i>
-        <br>
-        <br>
-        <i>([module].)[module]:[wsgi-application]</i>
-        <br>
-        <i>e.g. myapp.wsgi:application</i>
-    </p>
-    <p>
-        If no callable (in the example the part after the colon: <i>application</i>) is provided, menial will look for a callable called <i>application</i> by default.
-    </p>
-    <p>
-        Please make sure, the python path is set properly.
-    </p>
 {% endblock %}

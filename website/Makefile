@@ -15,7 +15,9 @@ src:
 	tar -zcvf menial_2.tar.gz ../src/
 	mv menial_2.tar.gz ../website/src/static/
 
-build: bin
+build: bin website
+
+website:
 	@mkdir -p ../website/build/styles
 	anvil -i src/ -s src/less/ -o build/ -t "menial 2" -v ../website/hashvalues.json
 

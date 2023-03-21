@@ -20,54 +20,26 @@
     <h2 id="config">Configuration</h2>
     <h3 id="config-basic">Basic</h3>
     <p>
-        You can find the default config file in the root folder of your menial installation. It contains all configuration directives you need to customize menial.
+        menial 2 can be configured by providing a config file on startup or by using command line arguments.
+        The following example shows a config file for menial 2, which contains all directives.
     </p>
     <p>
-        The content is JSON formated and has the following structure:
+        The content is YAML formated and has the following structure:
     </p>
     <p>
-        <pre class="prettyprint lang-json">
-{
-    "hosts": {
-        "*:80": {
-            "handler": "file",
-            "root": "default/",
-            "staticdir": "default/static/",
-            "defaultdocument": "index.html",
-            "additionalheaders": "Access-Control-Allow-Origin: *\n"
-        },
-        "*:8080": {
-            "handler": "redirect",
-            "root": "",
-            "permanent": true,
-            "target": "http://localhost/",
-            "keeptarget": true
-        },
-        "*:8080": {
-            "handler": "file",
-            "root": "/restricted/",
-            "authfile": "auth.db",
-            "dirlisting": true,
-            "fallback": "index.html",
-            "disabletrace": true
+        <pre>
+            <code class="lang-yaml">
+loglevel: info
+hosts:
+  localhost:80:
+    root: /usr/share/menial/html/
+    resources: /usr/share/menial/default/pages
+ssl:
+  4433:
+    key: key.pem
+    cert: cert.pem
 
-        }
-    },
-    "logger": "console",
-    "loglevel": "info",
-    "iplogging": false,
-    "logfilepath": "/tmp/",
-    "staticdir": "/etc/menial/static/",
-    "resources": "/etc/menial/resources/",
-    "debug": false,
-    "ssl": {
-        "443": {
-            "on": true,
-            "cert": "/path/to/the/cert.pem",
-            "key": "/path/to/the/key.pem"
-        }
-    }
-}
+            </code>
         </pre>
     </p>
     <h3 id="config-directives">Directives</h3>

@@ -5,8 +5,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" href="{{ url_for('favicon.png') }}" type="image/png" />
         <link rel="stylesheet" type="text/css" href="{{ url_for('main.css') }}">
-        <link rel="stylesheet" type="text/css" href="{{ url_for('sunburst.css') }}" />
-        <script src="{{ url_for('prettify.js') }}"></script>
+
+        <link rel="stylesheet" href="{{ url_for('monokai.min.css') }}">
+        <script src="{{ url_for('highlight.min.js') }}"></script>
+        <script>hljs.highlightAll();</script>
     </head>
     <body>
         <div id="main">

@@ -151,20 +151,23 @@ pub fn get_status_line(status: u16) -> String {
 }
 
 fn get_status_part(status: u16) -> String {
-    let status_line;
+    let status_part;
     match status {
         200 => {
-            status_line = String::from("200 OK");
+            status_part = String::from("200 OK");
         }
         400 => {
-            status_line = String::from("400 BAD REQUEST");
+            status_part = String::from("400 Bad Request");
+        }
+        401 => {
+            status_part = String::from("401 Unauthorized");
         }
         404 => {
-            status_line = String::from("404 NOT FOUND");
+            status_part = String::from("404 Not Found");
         }
         _ => {
             panic!("Unknown Status: {}", status);
         }
     }
-    return status_line;
+    return status_part;
 }

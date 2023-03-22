@@ -109,6 +109,8 @@ fn handle_ssl_connection(mut stream: SslStream<TcpStream>) {
 
 fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     let request_content = String::from_utf8_lossy(&buffer);
+    let intrusion_try = intrusion_try_detected(request_content.to_string());
+
     log!("debug", request_content);
     let mut document = String::from("");
     let mut host = String::from("");
@@ -139,7 +141,6 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
 
     log!("debug", format!("Requested host: {}", host));
 
-
     let split_for_search = document.split("?");
     let parts: Vec<&str> = split_for_search.collect();
     if parts.len() > 1 {
@@ -160,8 +161,9 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
 
     let base_headers = get_base_headers();
 
+    let mut unauthorized = false;
     if host_config.authfile != "" {
-        let unauthorized = (String::from("HTTP/1.1 401 Unauthorized\n"), Vec::from("WWW-Authenticate: Basic realm=User Visible Realm\n\n"));
+        unauthorized = true;
 
         if auth.len() > 5 {
             let basic_auth = String::from_utf8(general_purpose::STANDARD.decode(String::from(&auth[6..auth.len() - 0])).unwrap()).unwrap();
@@ -182,16 +184,15 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
                 if line_username.to_string() == username && line_password.to_string() == password {
                     authenticated = true;
                     log!("debug", String::from("User authorized"));
+                    unauthorized = false;
                     break;
                 };
             }
             if !authenticated {
                 log!("debug", String::from("User not authorized: Wrong password/username"));
-                return unauthorized;
             }
         } else {
             log!("debug", String::from("User not authorized: First attempt, not asked for password/username"));
-            return unauthorized;
         }
     }
 
@@ -204,13 +205,17 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
 
     let mut status: u16 = 0;
 
-    if intrusion_try_detected(request_content.to_string()) {
+    if unauthorized {
+        status = 401;
+    }
+
+    if intrusion_try {
         log!(
             "warning",
             format!("Intrusion try detected: {}", request_content)
         );
         status = 400;
-   }
+    }
 
     if document == "/" {
         document = String::from("/index.html");
@@ -222,7 +227,7 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     log!("debug", format!("Requested document path: {}", doc));
 
     let filename: String;
-    if status == 0 {
+    if status == 0 && !intrusion_try {
         if Path::new(&doc).exists() && request_content.starts_with("GET") {
             status = 200;
         } else {
@@ -231,8 +236,9 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
         };
     }
 
-    let status_line = get_status_line(status);
+    let mut not_authorized = String::from("");
 
+    let status_line = get_status_line(status);
     let (contents, file_modified, modified_short, hash);
     match status {
         200 => {
@@ -247,6 +253,16 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
                 filename = String::from(format!("{}.html", status));
                 (contents, file_modified, modified_short, hash) = get_default_status_page(status);
             }
+        }
+        401 => {
+            if host_config.resources != "" {
+                filename = String::from(format!("{}/{}.html", resources_root, status));
+                (contents, file_modified, modified_short, hash) = get_file_data(&filename);
+            } else {
+                filename = String::from(format!("{}.html", status));
+                (contents, file_modified, modified_short, hash) = get_default_status_page(status);
+            }
+            not_authorized = String::from("WWW-Authenticate: Basic realm=User Visible Realm");
         }
         _ => {
             panic!("Unknown Status: {}", status);
@@ -271,8 +287,8 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     }
 
     let headers = format!(
-        "{}\n{}\n{}\n{}\n{}\n{}\r\n\r\n",
-        status_line, base_headers, content_length, etag, modified, content_type,
+        "{}\n{}\n{}\n{}\n{}\n{}{}\r\n\r\n",
+        status_line, base_headers, content_length, etag, modified, content_type, format!("\n{}", not_authorized),
     );
 
     return (headers, contents);

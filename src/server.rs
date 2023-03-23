@@ -286,9 +286,15 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
         }
     }
 
+    // Bugfix, must be amended with an array of headers
+    let mut authorized_header = String::from("");
+    if !not_authorized.is_empty() {
+        authorized_header = format!("\n{}", not_authorized);
+    }
+
     let headers = format!(
         "{}\n{}\n{}\n{}\n{}\n{}{}\r\n\r\n",
-        status_line, base_headers, content_length, etag, modified, content_type, format!("\n{}", not_authorized),
+        status_line, base_headers, content_length, etag, modified, content_type, authorized_header,
     );
 
     return (headers, contents);

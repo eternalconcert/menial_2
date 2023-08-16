@@ -10,6 +10,9 @@ stages:
       source $HOME/.cargo/env
       cargo build --release
       cp target/release/main menial_2-linux.bin
+
+      cargo build --target=x86_64-pc-windows-gnu --release
+      cp target/release/main menial_2-windows.bin
   - name: website
     run: |
       cp menial_2-linux.bin website/src/static/menial_2-linux.bin
@@ -35,5 +38,6 @@ stages:
   - name: save-artifacts
     run: |
       cp menial_2-linux.bin /out/menial_2-linux.bin
+      cp menial_2-windows.bin /out/menial_2-windows.bin
       cp menial_2.tar.gz /out/
       cp website/menial_website.tar.gz /out/

@@ -2,13 +2,13 @@
 
 clean:
 	rm -rf ../target/release/
-	rm -f ../website/src/static/menial_2.bin
+	rm -f ../website/src/static/menial_2-linux.bin
 	rm -rf website/build/*
 
 bin: clean
 	cd ..
 	cargo build -r
-	mv ../target/release/main ../website/src/static/menial_2.bin
+	mv ../target/release/main ../website/src/static/menial_2-linux.bin
 	python3 utils/update_values.py dev
 
 src:

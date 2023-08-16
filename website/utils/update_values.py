@@ -7,7 +7,7 @@ from hashlib import sha256
 
 version = sys.argv[1]
 
-with open('../website/src/static/menial_2.bin', 'rb') as menial:
+with open('../website/src/static/menial_2-linux.bin', 'rb') as menial:
     menial_hash = sha256(menial.read()).hexdigest()
     menial_hash = menial_hash[:32] + "<wbr>" + menial_hash[32:]
 

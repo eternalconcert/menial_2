@@ -35,6 +35,5 @@ stages:
   - name: save-artifacts
     run: |
       cp menial_2-linux.bin /out/menial_2-linux.bin
-      cp menial_2-windows.bin /out/menial_2-windows.bin
       cp menial_2.tar.gz /out/
       cp website/menial_website.tar.gz /out/

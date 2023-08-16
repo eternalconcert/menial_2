@@ -9,9 +9,10 @@ stages:
     run: |
       source $HOME/.cargo/env
       cargo build --release
+      cp target/release/main menial_2-linux.bin
   - name: website
     run: |
-      cp target/release/main website/src/static/menial_2.bin
+      cp menial_2-linux.bin website/src/static/menial_2-linux.bin
       tar -zcvf menial_2.tar.gz src/
       cp menial_2.tar.gz website/src/static/
 
@@ -33,6 +34,6 @@ stages:
       docker push docker.softcreate.de/menial_2:$BUILDER_RUN
   - name: save-artifacts
     run: |
-      cp target/release/main /out/menial_2.bin
+      cp menial_2-linux.bin /out/menial_2-linux.bin
       cp menial_2.tar.gz /out/
       cp website/menial_website.tar.gz /out/

@@ -41,7 +41,7 @@ fn get_content_type(filename_extension: String) -> String {
         "json" => res = "application/json",
         "pdf" => res = "application/pdf",
         "png" => res = "image/png",
-        "svg" => "image/svg+xml",
+        "svg" => res = "image/svg+xml",
         "ttf" => res = "font/ttf",
         "txt" => res = "text/txt",
         "woff" => res = "font/woff",

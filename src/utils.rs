@@ -101,8 +101,11 @@ pub fn make304(modified: String, etag: String) -> String {
 }
 
 pub fn intrusion_try_detected(request_content: String) -> bool {
-    let double_dots: Vec<_> = request_content.match_indices("..").collect();
-    let double_slashes: Vec<_> = request_content.match_indices("//").collect();
+    let first_line = request_content.lines().next().unwrap_or("");
+    let double_dots: Vec<_> = first_line.match_indices("..").collect();
+    let double_slashes: Vec<_> = first_line.match_indices("//").collect();
+    log!("debug", format!("Double slashes: {}", double_slashes.len()));
+    log!("debug", format!("Double d:ots {}", double_dots.len()));
     return (double_slashes.len() > 1) || (double_dots.len() > 0);
 }
 

@@ -217,8 +217,8 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
         status = 400;
     }
 
-    if document == "/" {
-        document = String::from("/index.html");
+    if document.ends_with("/") {
+        document.push_str("index.html");
     }
 
     log!("debug", format!("GET-Request: {}", document));

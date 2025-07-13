@@ -21,7 +21,7 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 use std::path::Path;
 use std::sync::Arc;
-
+use regex::Regex;
 
 pub fn run_ssl_server(port: usize) {
     let mut acceptor = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
@@ -217,7 +217,13 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
         status = 400;
     }
 
-    if document.ends_with("/") {
+    let re = Regex::new(r"/[^/]+\.[^/]+$").unwrap();
+    let is_file_request = re.is_match(&document);
+
+    if (!document.ends_with("/") && !is_file_request) || document == "" {
+        document.push_str("/");
+    }
+    else if document.ends_with("/") {
         document.push_str("index.html");
     }
 

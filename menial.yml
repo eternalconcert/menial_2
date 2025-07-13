@@ -1,7 +1,7 @@
-loglevel: debug
+loglevel: info
 hosts:
-  localhost:8000:
-    root: /tmp/html/
+  localhost:80:
+    root: /usr/share/menial/html/
     resources: default/pages
 ssl:
   4433:

@@ -220,11 +220,8 @@ fn handle_request(buffer: [u8; 1024], default_port: &str) -> (String, Vec<u8>) {
     let re = Regex::new(r"/[^/]+\.[^/]+$").unwrap();
     let is_file_request = re.is_match(&document);
 
-    if (!document.ends_with("/") && !is_file_request) || document == "" {
-        document.push_str("/");
-    }
-    else if document.ends_with("/") {
-        document.push_str("index.html");
+    if (!document.ends_with("/") && !is_file_request) || document.ends_with("/") || document == "" {
+        document.push_str("/index.html");
     }
 
     log!("debug", format!("GET-Request: {}", document));
